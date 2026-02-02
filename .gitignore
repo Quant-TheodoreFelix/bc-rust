@@ -1,2 +1,7 @@
+Cargo.lock
+**/target
+mutants.out*/
+
+
 .idea/
 .vscode/
