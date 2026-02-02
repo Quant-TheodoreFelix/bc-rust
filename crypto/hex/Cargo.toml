@@ -1,0 +1,15 @@
+[package]
+name = "hex"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+utils.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+rng.workspace = true
+
+[[bench]]
+name = "hex_benches"
+harness = false
