@@ -8,6 +8,7 @@ mod hmac_tests {
     use core_test_framework::DUMMY_SEED_512;
     use hmac::*;
     use sha2::*;
+    use sha3::{SHA3_224, SHA3_256, SHA3_384, SHA3_512};
 
     #[test]
     fn simple_tests() {
@@ -43,6 +44,38 @@ mod hmac_tests {
         // mac.do_update(b"").unwrap();
         let output = mac.do_final();
         assert_eq!(&output, &hex::decode("999a901219f032cd497cadb5e6051e97b6a29ab297bd6ae722bd6062a2f59542").unwrap());
+    }
+
+    #[test]
+    fn test_type_aliases() {
+        let key = KeyMaterial512::from_bytes_as_type(
+                    b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+                    KeyType::MACKey).unwrap();
+
+        _ = HMAC::<SHA224>::new(&key).unwrap();
+        _ = HMAC_SHA224::new(&key).unwrap();
+
+        _ = HMAC::<SHA256>::new(&key).unwrap();
+        _ = HMAC_SHA256::new(&key).unwrap();
+
+        _ = HMAC::<SHA384>::new(&key).unwrap();
+        _ = HMAC_SHA384::new(&key).unwrap();
+
+        _ = HMAC::<SHA512>::new(&key).unwrap();
+        _ = HMAC_SHA512::new(&key).unwrap();
+
+
+        _ = HMAC::<SHA3_224>::new(&key).unwrap();
+        _ = HMAC_SHA3_224::new(&key).unwrap();
+
+        _ = HMAC::<SHA3_256>::new(&key).unwrap();
+        _ = HMAC_SHA3_256::new(&key).unwrap();
+
+        _ = HMAC::<SHA3_384>::new(&key).unwrap();
+        _ = HMAC_SHA3_384::new(&key).unwrap();
+
+        _ = HMAC::<SHA3_512>::new(&key).unwrap();
+        _ = HMAC_SHA3_512::new(&key).unwrap();
     }
 
     #[test]
@@ -144,6 +177,21 @@ mod hmac_tests {
         let bytes_written = mac.do_final_out(&mut out).unwrap();
         assert_eq!(bytes_written, MIN_FIPS_DIGEST_LEN);
         assert_eq!(&out, b"\x89\x6f\xb1\x12");
+
+        // fail case: mac value is correct but truncated
+        let mac = HMAC_SHA3_224::new(&key).unwrap();
+        let mut mac_val = mac.mac(b"Polly want a cracker?");
+        let verifier =  HMAC_SHA3_224::new(&key).unwrap();
+        assert!(verifier.verify(b"Polly want a cracker?", &mac_val));
+
+        // truncation of the mac value is considered a fail
+        let verifier =  HMAC_SHA3_224::new(&key).unwrap();
+        assert!(! verifier.verify(b"Polly want a cracker?", &mac_val[..mac_val.len() - 1]) );
+        
+        // .. as is some extra bytes at the end
+        let verifier =  HMAC_SHA3_224::new(&key).unwrap();
+        mac_val.extend_from_slice(&[0u8; 4]);
+        assert!(! verifier.verify(b"Polly want a cracker?", &mac_val) );
     }
 
     #[test]

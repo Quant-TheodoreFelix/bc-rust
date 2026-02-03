@@ -325,10 +325,30 @@ pub trait KeyMaterial {
 /// as part of its new functions.
 pub trait MAC: Sized {
 
-    // todo -- copy over the docstring
+    /// Create a new MAC instance with the given key.
+    ///
+    /// This is a common constructor whether creating or verifying a MAC value.
+    ///
+    /// Key / Salt is optional, which is indicated by providing an uninitialized KeyMaterial object of length zero,
+    /// the capacity is irrelevant, so KeyMateriol256::new() or KeyMaterial_internal::<0>::new() would both count as an absent salt.
+    ///
+    /// # Note about the security strength of the provided key:
+    /// If you initialize the MAC with a key that is tagged at a lower [SecurityStrength] than the
+    /// underlying hash function then [MAC::new] will fail with the following error:
+    /// ```text
+    /// MACError::KeyMaterialError(KeyMaterialError::SecurityStrength("HMAC::init(): provided key has a lower security strength than the instantiated HMAC")
+    /// ```
+    /// There are situations in which it is completely reasonable and secure to provide low-entropy
+    /// (and sometimes all-zero) keys / salts; for these cases we have provided [MAC::new_allow_weak_key].
     fn new(key: &impl KeyMaterial) -> Result<Self, MACError>;
 
-    // todo -- copy over the docstring
+    /// Create a new HMAC instance with the given key.
+    ///
+    /// This constructor completely ignores the [SecurityStrength] tag on the input key and will "just work".
+    /// This should be used if you really do need to use a weak key, such as an all-zero salt,
+    /// but use of this constructor is discouraged and you should really be asking yourself why you need it;
+    /// in most cases it indicates that your key is not long enough to support the security level of this
+    /// HMAC instance, or the key was derived using algorithms at a lower security level, etc.
     fn new_allow_weak_key(key: &impl KeyMaterial) -> Result<Self, MACError>;
 
     /// The size of the output in bytes.
@@ -343,52 +363,28 @@ pub trait MAC: Sized {
     /// ```text
     /// MACError::KeyMaterialError(KeyMaterialError::SecurityStrength("HMAC::init(): provided key has a lower security strength than the instantiated HMAC")
     /// ```
-    /// Sorry, unlike the other interfaces, there is no way to make this succeed (ie return the mac value)
-    /// in this case. If you intend to allow low-strength keys, then please use either [MAC::mac_out] or the full
-    /// flow with [MAC::init].
     fn mac(self, data: &[u8]) -> Vec<u8>;
 
     /// One-shot API that computes a MAC for the provided data and writes it into the provided output slice.
     /// `data` can be of any length, including zero bytes.
     ///
-    /// Unlike the equivalent interfaces in [Hash], [MAC] requires the MAC value to remain full-entropy,
-    /// and therefore does not perform automatic truncation; instead it will throw a [MACError::InvalidLength].
-    ///
-    /// Note about the security strength of the provided key:
-    /// This function behaves the same way os [MAC::init] and may be handled the same way.
+    /// Depending on the underlying MAC implementation, NIST may require that the library enforce
+    /// a minimum length on the mac output value. See documentation for the underlying implementation
+    /// to see conditions under which it throws [MACError::InvalidLength].
     fn mac_out(self, data: &[u8],out: &mut [u8]) -> Result<usize, MACError>;
 
     /// One-shot API that verifies a MAC for the provided data.
     /// `data` can be of any length, including zero bytes.
-    /// A result of Ok(()) indicates that the MAC is valid.
-    /// The MAC algorithm will return Err(MACError::VerificationFailed) if the MAC was the incorrect value,
-    /// but it may also return other types of MACError.
     ///
-    /// TODO: I would like opinions on whether this would be better returning a bool instead of Ok(()) on success and [MACError::VerificationFailed] on failure.
+    /// Internally, this will re-compute the MAC value and then compare it to the provided mac value
+    /// using constant-time comparison. It is highly encouraged to use this utility function instead of
+    /// comparing mac values for equality yourself.
+    ///
+    /// Returns a bool to indicate successful verification of the provided mac value.
+    /// The provided mac value must be an exact match, including length; for example a mac value
+    /// which has been truncated, or which contains extra bytes at the end is considered to not be a match
+    /// and will return false.
     fn verify(self, data: &[u8], mac: &[u8]) -> bool;
-
-    /// Initializes a new instance.
-    /// At this point, this instance could be for computing a MAC, or verifying one,
-    /// that is only determined after all the data is processed into one or more calls to [MAC::do_update].
-    ///
-    /// Note about the security strength of the provided key:
-    /// If you initialize the MAC with a key that is tagged at a lower [SecurityStrength] than the instantiated MAC algorithm,
-    /// then the MAC will still initialize correctly -- the MAC object will be ready for use,
-    /// but init() will return the following error instead of Ok(()):
-    /// ```text
-    /// MACError::KeyMaterialError(KeyMaterialError::SecurityStrength("HMAC::init(): provided key has a lower security strength than the instantiated HMAC")
-    /// ```
-    /// This error is ignorable; i.e. if you are intending to initialize the MAC with a low entropy key,
-    /// then you can ignore the error with a block like this:
-    /// ```rust,ignore
-    /// match mac.init(key) {
-    ///      Ok(_) | Err(MACError::KeyMaterialError(KeyMaterialError::SecurityStrength(_))) => { /* fine */ },
-    ///      Err(_other_error) => { /* handle error */ },
-    ///   }
-    /// ```
-    /// The purpose of this behaviour is not to prevent you from using the MAC algorithms with low-security keys,
-    /// but just to force you to think about it and document in your code how you want to handle it.
-    // fn init(&mut self, key: &impl KeyMaterial) -> Result<(), MACError>;
 
     /// Provide a chunk of data to be absorbed into the MAC.
     /// `data` can be of any length, including zero bytes.
@@ -397,13 +393,19 @@ pub trait MAC: Sized {
 
     fn do_final(self) -> Vec<u8>;
 
-    /// Unlike the equivalent interfaces in [Hash], [MAC] requires the MAC value to remain full-entropy,
-    /// and therefore does not perform automatic truncation; instead it will throw a [MACError::InvalidLength].
+    /// Depending on the underlying MAC implementation, NIST may require that the library enforce
+    /// a minimum length on the mac output value. See documentation for the underlying implementation
+    /// to see conditions under which it throws [MACError::InvalidLength].
     fn do_final_out(self, out: &mut [u8]) -> Result<usize, MACError>;
 
-    /// A result of Ok(()) indicates that the MAC is valid.
-    /// The MAC algorithm will return Err(MACError::VerificationFailed) if the MAC was the incorrect value,
-    /// but it may also return other types of MACError.
+    /// Internally, this will re-compute the MAC value and then compare it to the provided mac value
+    /// using constant-time comparison. It is highly encouraged to use this utility function instead of
+    /// comparing mac values for equality yourself.
+    ///
+    /// Returns a bool to indicate successful verification of the provided mac value.
+    /// The provided mac value must be an exact match, including length; for example a mac value
+    /// which has been truncated, or which contains extra bytes at the end is considered to not be a match
+    /// and will return false.
     fn do_verify_final(self, mac: &[u8]) -> bool;
 
     /// Returns the maximum security strength that this KDF is capable of supporting, based on the underlying primitives.

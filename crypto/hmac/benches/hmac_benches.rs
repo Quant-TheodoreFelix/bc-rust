@@ -21,7 +21,7 @@ fn bench_hmac_sha256(c: &mut Criterion) {
     group.throughput(Throughput::Bytes(big_data.len() as u64));
     group.bench_function(format!("{} bytes -- ::hashes()", big_data.len() as u64), |b| {
         b.iter(|| {
-            HMAC_SHA256::new().mac_out(&hmac_key, black_box(&big_data), &mut out).unwrap();
+            HMAC_SHA256::new(&hmac_key).unwrap().mac_out(black_box(&big_data), &mut out).unwrap();
             black_box(&out);
         })
     });
@@ -40,11 +40,11 @@ fn bench_hmac_sha512(c: &mut Criterion) {
     let hmac_key = KeyMaterial512::from_bytes_as_type(&data_block[..64], KeyType::MACKey).unwrap();
     let mut out = [0u8; 64];
 
-    let mut group = c.benchmark_group("hmac::HMAC_SHA256::mac_out() -- 16x1024 one-shot");
+    let mut group = c.benchmark_group("hmac::HMAC_SHA512::mac_out() -- 16x1024 one-shot");
     group.throughput(Throughput::Bytes(big_data.len() as u64));
     group.bench_function(format!("{} bytes -- ::hashes()", big_data.len() as u64), |b| {
         b.iter(|| {
-            HMAC_SHA512::new().mac_out(&hmac_key, black_box(&big_data), &mut out).unwrap();
+            HMAC_SHA512::new(&hmac_key).unwrap().mac_out(black_box(&big_data), &mut out).unwrap();
             black_box(&out);
         })
     });

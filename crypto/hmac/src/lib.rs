@@ -2,23 +2,59 @@
 //! as specified in RFC2104, taking into account NIST Implementation Guidance in FIPS 140-2 IG A.8
 //! and NIST SP 800-107-r1.
 //!
+//! # Usage
+//!
+//! The HMAC object (and the [MAC] trait in general) is designed in three phases:
+//!
+//! * The initialization phase where you specify the underlying hash function and the key material.
+//! * The update phase where you feed in the content being MAC'd, either in one-shot or in chunks.
+//! * The finalization phase where you either obtain the MAC value or verify an existing MAC value.
+//!
+//! The initialization phase is primarily performed via the [MAC::new] function which performs
+//! checks on the provided key to ensure that it is of the correct type [KeyType::MACKey] and tagged
+//! at the correct security level for the chosen hash function. In cases where you need to use HMAC
+//! with an intentially week key (such as an all-zero salt), the alternative constructor
+//! [MAC::new_allow_weak_key] can be used.
+//!
+//! The update phase supports streaming of the content via the repeated calls to the [MAC::do_update] function.
+//! One-shot APIs are provided that combine the update and finalization phases into a single function call.
+//!
+//!
 //! # Examples
-//! ## Constructing an object.
 //!
 //! HMAC objects can be constructed with any underlying hash function that implements [Hash].
-//! Type aliases string, algorithm names, and a [MACFactory] are provided for the common HMAC-HASH algorithms.
+//! Type aliases are provided for the common HMAC-HASH algorithms.
 //!
 //! The following object instantiations are equivalent:
 //!
 //! ```
 //! use hmac::HMAC_SHA256;
-//! let hmac = HMAC_SHA256::new();
+//! use core_interface::traits::MAC;
+//! use core_interface::key_material::{KeyMaterial256, KeyType};
+//!
+//! let key = KeyMaterial256::from_bytes_as_type(
+//!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+//!             KeyType::MACKey).unwrap();
+//!
+//! let hmac = HMAC_SHA256::new(&key).expect("Should succeed because key is long enough and tagged KeyType::MACKey");
 //! ```
 //! and
 //! ```
 //! use hmac::HMAC;
 //! use sha2::SHA256;
-//! let hmac = HMAC::<SHA256>::new();
+//! use core_interface::traits::MAC;
+//! use core_interface::key_material::{KeyMaterial256, KeyType};
+//!
+//! let key = KeyMaterial256::from_bytes_as_type(
+//!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+//!             KeyType::MACKey).unwrap();
+//!
+//!
+//! let key = KeyMaterial256::from_bytes_as_type(
+//!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+//!             KeyType::MACKey).unwrap();
+//!
+//! let hmac = HMAC::<SHA256>::new(&key).expect("Should succeed because key is long enough and tagged KeyType::MACKey");
 //! ```
 //!
 //! ## Computing a MAC
@@ -26,14 +62,16 @@
 //!
 //! The simplest usage is via the one-shot functions.
 //! ```
-//! use core_interface::key_material::{KeyMaterial256, KeyType};
+//! use hmac::HMAC_SHA256;
 //! use core_interface::traits::MAC;
+//! use core_interface::key_material::{KeyMaterial256, KeyType};
 //!
 //! let key = KeyMaterial256::from_bytes_as_type(
 //!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 //!             KeyType::MACKey).unwrap();
 //! let data: &[u8] = b"Hello, world!";
-//! let output: Vec<u8> = hmac::HMAC_SHA256::new().mac(&key, data).unwrap();
+//! let hmac = HMAC_SHA256::new(&key).expect("Should succeed because key is long enough and tagged KeyType::MACKey");
+//! let output: Vec<u8> = hmac.mac(data);
 //! ```
 //!
 //! More advanced usage will require creating an HMAC object to hold state between successive calls,
@@ -47,11 +85,10 @@
 //! let key = KeyMaterial256::from_bytes_as_type(
 //!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 //!             KeyType::MACKey).unwrap();
-//! let mut hmac = HMAC_SHA256::new();
-//! hmac.init(&key);
+//! let mut hmac = HMAC_SHA256::new(&key).expect("Should succeed because key is long enough and tagged KeyType::MACKey");
 //! hmac.do_update(b"Hello,");
 //! hmac.do_update(b" world!");
-//! let output: Vec<u8> = hmac.do_final().unwrap();
+//! let output: Vec<u8> = hmac.do_final();
 //! ```
 //!
 //! ## Verifying a MAC
@@ -68,15 +105,21 @@
 //!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 //!             KeyType::MACKey).unwrap();
 //! let data: &[u8] = b"Hello, world!";
-//! hmac::HMAC_SHA256::new().verify(&key,
-//!                                 data,
-//!                                 b"\xa2\xd1\x2e\xcf\xfc\x41\xba\xf1\x23\xd6\x3e\x44\xfc\x27\x88\x90\x47\xcd\x08\xe7\x05\xd7\x0f\xa3\xb8\xaa\x8a\x5c\x18\x7c\x6c\xa9"
-//!                                 ).unwrap();  // Returns Ok(()) on success,
-//!                                              // or Err(MACError:VerificationFailed) on failure.
+//!
+//! // .verify() returns a bool: true if the MAC is valid, false otherwise.
+//! if hmac::HMAC_SHA256::new(&key).unwrap()
+//!                 .verify(data,
+//!                         b"\xa2\xd1\x2e\xcf\xfc\x41\xba\xf1\x23\xd6\x3e\x44\xfc\x27\x88\x90\x47\xcd\x08\xe7\x05\xd7\x0f\xa3\xb8\xaa\x8a\x5c\x18\x7c\x6c\xa9"
+//!                         )
+//! {
+//!     println!("MAC is valid!");
+//! } else {
+//!     println!("MAC is invalid!");
+//! }
 //! ```
 //!
 //! Similarly, a streaming version is available, which is identical to the streaming interface for
-//! computing a mac value, but calls [do_verify_final] instead of [do_final].
+//! computing a mac value, but calls [MAC::do_verify_final] instead of [MAC::do_final].
 //!
 //! ```
 //! use core_interface::key_material::{KeyMaterial256, KeyType};
@@ -86,14 +129,33 @@
 //! let key = KeyMaterial256::from_bytes_as_type(
 //!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
 //!             KeyType::MACKey).unwrap();
-//! let mut hmac = HMAC_SHA256::new();
-//! hmac.init(&key);
+//! let mut hmac = HMAC_SHA256::new(&key).unwrap();
 //! hmac.do_update(b"Hello,");
 //! hmac.do_update(b" world!");
-//! hmac.do_verify_final(b"\xa2\xd1\x2e\xcf\xfc\x41\xba\xf1\x23\xd6\x3e\x44\xfc\x27\x88\x90\x47\xcd\x08\xe7\x05\xd7\x0f\xa3\xb8\xaa\x8a\x5c\x18\x7c\x6c\xa9"
-//!                     ).unwrap();  // Returns Ok(()) on success,
-//!                                  // or Err(MACError:VerificationFailed) on failure.
+//! if hmac.do_verify_final(b"\xa2\xd1\x2e\xcf\xfc\x41\xba\xf1\x23\xd6\x3e\x44\xfc\x27\x88\x90\x47\xcd\x08\xe7\x05\xd7\x0f\xa3\xb8\xaa\x8a\x5c\x18\x7c\x6c\xa9"
+//!                     )
+//! {
+//!     println!("MAC is valid!");
+//! } else {
+//!     println!("MAC is invalid!");
+//! }
 //! ```
+//!
+//! # Request for feedback on fallability of this API
+//! We have made an effort to reduce the number of fallibly APIs in the [MAC] trait; in particular
+//! the APIs for the update and most of the finalize phases are infallible -- they just work.
+//! However, we were not able to design it to completely avoid runtime error conditions, such as
+//! providing [MAC::do_final_out] with a buffer that is too small to hold what NIST considered the smallest
+//! valid MAC value for the given underlying hash function.
+//!
+//! Also, the key strength and type checking in the initialization phase means that both [MAC::new] and
+//! [MAC::new_allow_weak_key] have several runtime error conditions that they check for.
+//!
+//! All of this leads to application code that requires a lot more .unwrap(), .expect(), or match than we would
+//! really like.
+//!
+//! We would love feedback on an alternate design for this API than carries less runtime error
+//! conditions, without sacrificing the key strength checking that the metadata in the [KeyMaterial] object allows.
 
 
 #![forbid(unsafe_code)]
@@ -203,8 +265,6 @@ const OPAD_BYTE: u8 = 0x5C;
 pub const MIN_FIPS_DIGEST_LEN: usize = 4; // 32 / 8;
 
 impl<HASH: Hash + Default> HMAC<HASH> {
-    
-
     fn pad_key_into_hasher(&mut self, padding: u8) {
         // TODO: it would be nice to be able to statically extract the length of HASH and not need a Vec or over-sized array here.
         // TODO: make this no_std-friendly
@@ -297,22 +357,6 @@ impl<HASH: Hash + Default> HMAC<HASH> {
 // TODO: against different data.
 
 impl<HASH: Hash + Default> MAC for HMAC<HASH> {
-
-    /// Create a new HMAC instance with the given key.
-    ///
-    /// This is a common constructor whether creating or verifying a MAC value.
-    ///
-    /// Key / Salt is optional, which is indicated by providing an uninitialized KeyMaterial object of length zero,
-    /// the capacity is irrelevant, so KeyMateriol256::new() or KeyMaterial_internal::<0>::new() would both count as an absent salt.
-    ///
-    /// # Note about the security strength of the provided key:
-    /// If you initialize the MAC with a key that is tagged at a lower [SecurityStrength] than the
-    /// underlying hash function then [HMAC::new] will fail with the following error:
-    /// ```text
-    /// MACError::KeyMaterialError(KeyMaterialError::SecurityStrength("HMAC::init(): provided key has a lower security strength than the instantiated HMAC")
-    /// ```
-    /// There are situations in which it is completely reasonable and secure to provide low-entropy
-    /// (and sometimes all-zero) keys / salts; for these cases we have provided [HMAC::new_allow_weak_keys].
     fn new(key: &impl KeyMaterial) -> Result<Self, MACError> {
         let mut hmac = Self {
             hasher: HASH::default(),
@@ -323,13 +367,6 @@ impl<HASH: Hash + Default> MAC for HMAC<HASH> {
         Ok(hmac)
     }
 
-    /// Create a new HMAC instance with the given key.
-    ///
-    /// This constructor completely ignores the [SecurityStrength] tag on the input key and will "just work".
-    /// This should be used if you really do need to use a weak key, such as an all-zero salt,
-    /// but use of this constructor is discouraged and you should really be asking yourself why you need it;
-    /// in most cases it indicates that your key is not long enough to support the security level of this
-    /// HMAC instance, or the key was derived using algorithms at a lower security level, etc.
     fn new_allow_weak_key(key: &impl KeyMaterial) -> Result<Self, MACError> {
         let mut hmac = Self {
             hasher: HASH::default(),
@@ -339,7 +376,7 @@ impl<HASH: Hash + Default> MAC for HMAC<HASH> {
         hmac.init(key, true)?;
         Ok(hmac)
     }
-    
+
     fn output_len(&self) -> usize {
         self.hasher.output_len()
     }
