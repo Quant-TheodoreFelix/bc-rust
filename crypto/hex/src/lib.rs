@@ -1,3 +1,25 @@
+//! Good old fashioned hex encoder and decoder.
+//!
+//! This one is implemented using constant-time operations in the conversions
+//! from Strings to byte values, so it is safe to use on cryptographic secret values.
+//!
+//! It should just work the way you expect: encode takes any bytes-like rust type
+//! and returns a String, decode takes a String (which can be in any bytes-like container)
+//! and returns a `Vec<u8>`.
+//!
+//! ```
+//! let out = hex::encode(b"\x00\x01\x02\x03"); // "00010203"
+//! let out = hex::encode(&[0x00, 0x01, 0x02, 0x03]); // "00010203"
+//! let out = hex::encode(vec![0x00, 0x01, 0x02, 0x03]); // "00010203"
+//!
+//! let out = hex::decode("00010203").unwrap(); // [0x00, 0x01, 0x02, 0x03]
+//! let out = hex::decode(b"00010203").unwrap(); // [0x00, 0x01, 0x02, 0x03]
+//! ```
+//!
+//! The decoder ignores whitespace and "\x".
+
+#![forbid(unsafe_code)]
+
 use utils::ct::Condition;
 
 #[derive(Debug)]
@@ -7,6 +29,7 @@ pub enum HexError {
     InsufficientOutputBufferSize,
 }
 
+/// One-shot encode from bytes to a hex-encoded string using a constant-time implementation.
 pub fn encode<T: AsRef<[u8]>>(input: T) -> String {
     let mut out = vec![0u8; input.as_ref().len() * 2];
     encode_out(input.as_ref(), &mut out).unwrap();
@@ -47,6 +70,7 @@ pub fn encode_out<T: AsRef<[u8]>>(input: T, out: &mut [u8]) -> Result<usize, Hex
     }
 }
 
+/// One-shot decode from a hex string to a bytes using a constant-time implementation.
 /// ignores whitespace and \x
 pub fn decode<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, HexError> {
     let inref = input.as_ref();

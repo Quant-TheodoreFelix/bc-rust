@@ -1,5 +1,5 @@
-use encoders::hex;
-use encoders::hex::HexError;
+use hex;
+use hex::HexError;
 
 #[test]
 fn encode_test() {

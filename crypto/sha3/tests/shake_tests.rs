@@ -20,6 +20,11 @@ mod shake_tests {
         let output = SHAKE128::new().hash_xof(&[0u8, 1u8, 2u8, 3u8, 4u8], 4);
         assert_eq!(output[3], 0xFF);
 
+        // just for comparison
+        let mut output2 = vec![0u8; 4];
+        SHAKE128::new().hash_xof_out(&[0u8, 1u8, 2u8, 3u8, 4u8], &mut output2);
+        assert_eq!(output, output2);
+
         // test bounds
         let mut shake = SHAKE128::new();
         shake.absorb(&[0u8, 1u8, 2u8, 3u8, 4u8]).expect("Absorb failed");

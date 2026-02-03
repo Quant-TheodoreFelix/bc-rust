@@ -468,7 +468,7 @@ impl<H: HashDRBG80090AParams> Sp80090ADrbg for HashDRBG80090A<H> {
 }
 
 impl<H: HashDRBG80090AParams> RNG for HashDRBG80090A<H> {
-    // TODO: add this back once I figure out how to handle a streaming-style reseed.
+    // TODO: add this back once we figure out how to handle a streaming-style reseed.
     // fn add_seed_bytes(&mut self, additional_seed: &[u8]) -> Result<(), RNGError> {
     //     if !self.admin_info.instantiated { return Err(RNGError::Uninitialized) }
     //
@@ -570,6 +570,9 @@ fn test_hash_df() {
     let mut out = [0u8; 100];
     hash_df::<SHA256>(&[0x01, 0x02, 0x03], &[0x04, 0x05], &[0x06, 0x07], &[0x08, 0x09], &mut out);
     assert_ne!(out, [0u8; 100]);
+    // repeatability test
+    // println!("out: {:?}", out);
+    assert_eq!(out, [150u8, 177u8, 87u8, 145u8, 138u8, 4u8, 164u8, 14u8, 162u8, 43u8, 159u8, 152u8, 121u8, 117u8, 6u8, 18u8, 253u8, 84u8, 41u8, 64u8, 40u8, 209u8, 16u8, 176u8, 106u8, 115u8, 172u8, 193u8, 246u8, 228u8, 208u8, 79u8, 37u8, 31u8, 134u8, 141u8, 200u8, 7u8, 42u8, 199u8, 229u8, 236u8, 236u8, 186u8, 28u8, 87u8, 200u8, 14u8, 127u8, 36u8, 132u8, 23u8, 36u8, 150u8, 23u8, 215u8, 247u8, 121u8, 175u8, 82u8, 99u8, 187u8, 235u8, 25u8, 213u8, 18u8, 106u8, 22u8, 4u8, 99u8, 1u8, 184u8, 211u8, 160u8, 177u8, 67u8, 78u8, 181u8, 69u8, 51u8, 117u8, 2u8, 72u8, 36u8, 134u8, 72u8, 2u8, 9u8, 105u8, 149u8, 136u8, 35u8, 81u8, 114u8, 142u8, 80u8, 94u8, 42u8, 85u8, 155]);
 
     // Test success with out.len() at the maximum allowed for SHA256 (255 * 32 = 8160)
     let mut out_max_sha256 = vec![0u8; 255 * 32];

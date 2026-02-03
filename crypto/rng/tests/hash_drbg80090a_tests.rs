@@ -155,7 +155,6 @@ mod tests {
         }
 
         // Error case: seed too short
-        // todo
         let mut rng = HashDRBG_SHA256::new();
         let seed = KeyMaterial256::from_bytes_as_type(&DUMMY_SEED_512[..8], KeyType::Seed).unwrap();
         match rng.reseed(&seed, &[0u8; 32]) {

@@ -1,5 +1,5 @@
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use encoders::hex;
+use hex;
 use std::hint::black_box;
 
 fn bench_hex_encode(c: &mut Criterion) {

@@ -11,6 +11,24 @@ mod sha3_tests {
     use sha3::{SHA3_224, SHA3_256, SHA3_384, SHA3_512};
 
     #[test]
+    fn test_constants() {
+        assert_eq!(SHA3_224::OUTPUT_LEN, 28);
+        assert_eq!(SHA3_256::OUTPUT_LEN, 32);
+        assert_eq!(SHA3_384::OUTPUT_LEN, 48);
+        assert_eq!(SHA3_512::OUTPUT_LEN, 64);
+
+        assert_eq!(SHA3_224::BLOCK_LEN, 144);
+        assert_eq!(SHA3_256::BLOCK_LEN, 136);
+        assert_eq!(SHA3_384::BLOCK_LEN, 104);
+        assert_eq!(SHA3_512::BLOCK_LEN, 72);
+
+        assert_eq!(SHA3_224::new().block_bitlen(), 144*8);
+        assert_eq!(SHA3_256::new().block_bitlen(), 136*8);
+        assert_eq!(SHA3_384::new().block_bitlen(), 104*8);
+        assert_eq!(SHA3_512::new().block_bitlen(), 72*8);
+    }
+
+    #[test]
     fn test_framework_hash() {
         let test_framework = TestFrameworkHash::new();
         test_framework.test_hash::<SHA3_224>(DUMMY_SEED_512, b"\xFE\x51\xC5\xD7\x62\x48\xE1\xE9\xD3\x01\x29\x6A\xE8\xAB\x94\x69\xD2\x86\x34\xB4\xAD\x3E\x9E\x78\xC8\xB0\x9D\x47");

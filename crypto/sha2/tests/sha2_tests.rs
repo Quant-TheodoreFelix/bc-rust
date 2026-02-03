@@ -57,7 +57,7 @@ mod sha2_tests {
     }
 
     #[test]
-    fn test_length_constants() {
+    fn test_constants() {
         assert_eq!(SHA224::OUTPUT_LEN, 28);
         assert_eq!(SHA256::OUTPUT_LEN, 32);
         assert_eq!(SHA384::OUTPUT_LEN, 48);

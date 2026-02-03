@@ -3,8 +3,19 @@
 //! This crate provides the implementations of the deterministic random bit generator (DRBG) algorithms
 //! which, together with a strong entropy source, form the basis of cryptographic random number generation.
 //!
-//! **WARNING: If you just need random numbers, then please head over to [factory::rng_factory],
-//! which initializes all RNG instances from the OS RNG and hides all the dangerous stuff :)**
+//! Here's the basic way to get some random bytes:
+//!
+//! ```
+//! use core_interface::traits::RNG;
+//! use rng;
+//! let random_bytes = rng::DefaultRNG::default().next_bytes(32);
+//! ```
+//! This is secure because `::default()` seeds the RNG from the OS, configured for general use.
+//!
+//! **WARNING: most people should stop reading here and should not be mucking around with the internals of RNGs.
+//! This crate contains dragons and other horrible things. 🐉🐍🐜**
+//!
+//! # 🚨🚨🚨Security Warning 🚨🚨🚨
 //!
 //! Misuse of the objects in this crate can lead to output which may appear random, but
 //! is in fact completely deterministic (ie multiple runs of your application will give the same outputs)
@@ -15,15 +26,19 @@
 //! since misuse of [Sp80090ADrbg::instantiate] can completely undermine the security of your entire
 //! cryptographic application.
 
+#![forbid(unsafe_code)]
+
 #![allow(incomplete_features)] // Need this because generic_const_exprs is currently experimental.
 #![feature(generic_const_exprs)]
 
 use core_interface::errors::RNGError;
 use core_interface::traits::{KeyMaterial, SecurityStrength};
-// extern crate core; // todo what's this??
-use crate::hash_drbg80090a::{
-    HashDRBG80090A, HashDRBG80090AParams_SHA256, HashDRBG80090AParams_SHA512,
-};
+use crate::hash_drbg80090a::{HashDRBG80090A, HashDRBG80090AParams_SHA256, HashDRBG80090AParams_SHA512,};
+
+// needed for docs
+#[allow(unused_imports)]
+use core_interface::key_material::KeyType;
+// end doc-only imports
 
 pub mod hash_drbg80090a;
 
@@ -95,13 +110,13 @@ pub trait Sp80090ADrbg {
     /// Throws a [RNGError::InsufficientSeedEntropy] if `len` exceeds [SecurityStrength].
     fn generate(&mut self, additional_input: &[u8], len: usize) -> Result<Vec<u8>, RNGError>;
 
-    /// As per [generate], but writes to the provided output slice.
+    /// As per [Sp80090ADrbg::generate], but writes to the provided output slice.
     /// The output slice is filled.
     /// Throws a [RNGError::InsufficientSeedEntropy] if the length of the output slice exceeds [SecurityStrength].
     /// Retruns the number of bits output.
     fn generate_out(&mut self, additional_input: &[u8], out: &mut [u8]) -> Result<usize, RNGError>;
 
-    /// As per [generate], but writes to the provided KeyMaterial.
+    /// As per [Sp80090ADrbg::generate], but writes to the provided KeyMaterial.
     /// The output [KeyMaterial] is filled to capacity.
     /// Throws a [RNGError::InsufficientSeedEntropy] if the capacity of the output KeyMaterial exceeds [SecurityStrength].
     /// Retruns the number of bits output.
@@ -111,6 +126,6 @@ pub trait Sp80090ADrbg {
         out: &mut impl KeyMaterial,
     ) -> Result<usize, RNGError>;
 
-    // TODO
+    // TODO -- implement FIPS health tests
     // fn health_test(&mut self) -> Result<bool, RNGError>;
 }

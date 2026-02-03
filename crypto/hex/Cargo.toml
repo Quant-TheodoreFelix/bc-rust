@@ -8,7 +8,6 @@ utils.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
-rng.workspace = true
 
 [[bench]]
 name = "hex_benches"
