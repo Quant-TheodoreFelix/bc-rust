@@ -166,25 +166,26 @@ pub trait KDF {
     fn max_security_strength(&self) -> SecurityStrength;
 }
 
-pub trait KeyedAlgorithm {
-    /// Configure this object to perform its operations without regard for the [SecurityStrength]
-    /// metadata on the input key. This is, for example, how you tell the library that you really
-    /// are intending to use an all-zero seed or salt, or that you are intending to use a key that
-    /// would normally be considered too short for the given algorithm.
-    ///
-    /// The reason for having this as an explicit opt-in is that while these are legitimate
-    /// use cases, they are also indistinguishable from security bugs that result from non-initialized
-    /// keys, or users providing keys that are not suitable for the given algorithm.
-    /// The intention of this flag is not to prevent developers from doing what they need to, but
-    /// rather to make them think it through carefully and tag their code where they wish to disable
-    /// security functionality of the library.
-    ///
-    /// Since this function removes one of the core security enforcement mechanisms of the library,
-    /// it should be used carefully.
-    /// Presence of this function in application code should be a sign that this code requires careful
-    /// code review.
-    fn allow_weak_keys(&mut self);
-}
+// todo -- remove?
+// pub trait KeyedAlgorithm {
+//     /// Configure this object to perform its operations without regard for the [SecurityStrength]
+//     /// metadata on the input key. This is, for example, how you tell the library that you really
+//     /// are intending to use an all-zero seed or salt, or that you are intending to use a key that
+//     /// would normally be considered too short for the given algorithm.
+//     ///
+//     /// The reason for having this as an explicit opt-in is that while these are legitimate
+//     /// use cases, they are also indistinguishable from security bugs that result from non-initialized
+//     /// keys, or users providing keys that are not suitable for the given algorithm.
+//     /// The intention of this flag is not to prevent developers from doing what they need to, but
+//     /// rather to make them think it through carefully and tag their code where they wish to disable
+//     /// security functionality of the library.
+//     ///
+//     /// Since this function removes one of the core security enforcement mechanisms of the library,
+//     /// it should be used carefully.
+//     /// Presence of this function in application code should be a sign that this code requires careful
+//     /// code review.
+//     fn allow_weak_keys(&mut self);
+// }
 
 /// A helper class used across the bc-rust library to hold bytes-like key material.
 /// See [KeyMaterialInternal] for for details, such as constructors.
@@ -319,7 +320,17 @@ pub trait KeyMaterial {
 /// function or to compute a new MAC and compare it to the existing MAC, however the provided verification functions
 /// use constant-time comparison to avoid cryptographic timing attacks whereby an attacker could learn
 /// the bytes of the MAC value under some conditions. Therefore, it is highly recommended to use the provided verification functions.
+///
+/// Note that the MAC key is not represented in this trait because it is provided to the MAC algorithm
+/// as part of its new functions.
 pub trait MAC: Sized {
+
+    // todo -- copy over the docstring
+    fn new(key: &impl KeyMaterial) -> Result<Self, MACError>;
+
+    // todo -- copy over the docstring
+    fn new_allow_weak_key(key: &impl KeyMaterial) -> Result<Self, MACError>;
+
     /// The size of the output in bytes.
     fn output_len(&self) -> usize;
 
@@ -335,7 +346,7 @@ pub trait MAC: Sized {
     /// Sorry, unlike the other interfaces, there is no way to make this succeed (ie return the mac value)
     /// in this case. If you intend to allow low-strength keys, then please use either [MAC::mac_out] or the full
     /// flow with [MAC::init].
-    fn mac(&self, key: &impl KeyMaterial, data: &[u8]) -> Result<Vec<u8>, MACError>;
+    fn mac(self, data: &[u8]) -> Vec<u8>;
 
     /// One-shot API that computes a MAC for the provided data and writes it into the provided output slice.
     /// `data` can be of any length, including zero bytes.
@@ -345,12 +356,7 @@ pub trait MAC: Sized {
     ///
     /// Note about the security strength of the provided key:
     /// This function behaves the same way os [MAC::init] and may be handled the same way.
-    fn mac_out(
-        &self,
-        key: &impl KeyMaterial,
-        data: &[u8],
-        out: &mut [u8],
-    ) -> Result<usize, MACError>;
+    fn mac_out(self, data: &[u8],out: &mut [u8]) -> Result<usize, MACError>;
 
     /// One-shot API that verifies a MAC for the provided data.
     /// `data` can be of any length, including zero bytes.
@@ -359,7 +365,7 @@ pub trait MAC: Sized {
     /// but it may also return other types of MACError.
     ///
     /// TODO: I would like opinions on whether this would be better returning a bool instead of Ok(()) on success and [MACError::VerificationFailed] on failure.
-    fn verify(&self, key: &impl KeyMaterial, data: &[u8], mac: &[u8]) -> Result<(), MACError>;
+    fn verify(self, data: &[u8], mac: &[u8]) -> bool;
 
     /// Initializes a new instance.
     /// At this point, this instance could be for computing a MAC, or verifying one,
@@ -382,14 +388,14 @@ pub trait MAC: Sized {
     /// ```
     /// The purpose of this behaviour is not to prevent you from using the MAC algorithms with low-security keys,
     /// but just to force you to think about it and document in your code how you want to handle it.
-    fn init(&mut self, key: &impl KeyMaterial) -> Result<(), MACError>;
+    // fn init(&mut self, key: &impl KeyMaterial) -> Result<(), MACError>;
 
     /// Provide a chunk of data to be absorbed into the MAC.
     /// `data` can be of any length, including zero bytes.
     /// do_update() is intended to be used as part of a streaming interface, and so may by called multiple times.
-    fn do_update(&mut self, data: &[u8]) -> Result<(), MACError>;
+    fn do_update(&mut self, data: &[u8]);
 
-    fn do_final(self) -> Result<Vec<u8>, MACError>;
+    fn do_final(self) -> Vec<u8>;
 
     /// Unlike the equivalent interfaces in [Hash], [MAC] requires the MAC value to remain full-entropy,
     /// and therefore does not perform automatic truncation; instead it will throw a [MACError::InvalidLength].
@@ -398,7 +404,7 @@ pub trait MAC: Sized {
     /// A result of Ok(()) indicates that the MAC is valid.
     /// The MAC algorithm will return Err(MACError::VerificationFailed) if the MAC was the incorrect value,
     /// but it may also return other types of MACError.
-    fn do_verify_final(self, mac: &[u8]) -> Result<(), MACError>;
+    fn do_verify_final(self, mac: &[u8]) -> bool;
 
     /// Returns the maximum security strength that this KDF is capable of supporting, based on the underlying primitives.
     fn max_security_strength(&self) -> SecurityStrength;

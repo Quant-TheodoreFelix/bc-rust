@@ -102,7 +102,7 @@
 #![feature(generic_const_exprs)]
 
 use core_interface::errors::{KeyMaterialError, MACError};
-use core_interface::traits::{Algorithm, Hash, KeyMaterial, KeyedAlgorithm, SecurityStrength, MAC};
+use core_interface::traits::{Algorithm, Hash, KeyMaterial, SecurityStrength, MAC};
 use core_interface::key_material::{KeyType};
 use sha2::{SHA224, SHA256, SHA384, SHA512};
 use sha3::{SHA3_224, SHA3_256, SHA3_384, SHA3_512};
@@ -185,8 +185,6 @@ pub struct HMAC<HASH: Hash + Default> {
     hasher: HASH,
     key: [u8; LARGEST_HASHER_OUTPUT_LEN],
     key_len: usize, // Doing it this way to avoid needing a vec, so that this can be made no_std friendly.
-    initialized: bool,
-    allow_weak_keys: bool,
 }
 
 // See definitions in RFC 2104 Section 2.
@@ -205,19 +203,7 @@ const OPAD_BYTE: u8 = 0x5C;
 pub const MIN_FIPS_DIGEST_LEN: usize = 4; // 32 / 8;
 
 impl<HASH: Hash + Default> HMAC<HASH> {
-    // pub fn from_key(key: &[u8]) -> Self {
-    //     Self { hasher: HASH::default(), key: Vec::from(key), initialized: false }
-    // }
-
-    pub fn new() -> Self {
-        Self {
-            hasher: HASH::default(),
-            key: [0u8; LARGEST_HASHER_OUTPUT_LEN],
-            key_len: 0,
-            initialized: false,
-            allow_weak_keys: false,
-        }
-    }
+    
 
     fn pad_key_into_hasher(&mut self, padding: u8) {
         // TODO: it would be nice to be able to statically extract the length of HASH and not need a Vec or over-sized array here.
@@ -244,6 +230,43 @@ impl<HASH: Hash + Default> HMAC<HASH> {
         self.hasher.do_update(&padded)
     }
 
+    /// Private init so that users are forced to go through one of the public new methods and thus we
+    /// don't need to track state errors.
+    fn init(&mut self, key: &impl KeyMaterial, allow_weak_keys: bool) -> Result<(), MACError> {
+        // check that the key is of type KeyMaterial::MACKey
+        // Make an exception for the zero-length key or all-zero keys, which is allowed, and it's just a nuisance to
+        // force users to set KeyType::MACKey for a zero-length key.
+        if key.key_len() != 0 && key.key_type() != KeyType::Zeroized && key.key_type() != KeyType::MACKey {
+            return Err(MACError::KeyMaterialError(KeyMaterialError::InvalidKeyType(
+                "Key type must be a MAC key.",
+            )));
+        }
+
+        // import the key material as bytes.
+        // Per RFC 2104 Section 2, if the application key exceeds the block
+        // length of the underlying hashes algorithm, we apply a hash invocation
+        // over the key first.
+
+        if key.key_len() > self.hasher.block_bitlen() / 8 {
+            // then we have to pre-hash it -- use a new instance of the hasher rather than the internal one
+            HASH::default().hash_out(key.ref_to_bytes(), &mut self.key[..self.hasher.output_len()]);
+            self.key_len = self.hasher.output_len();
+
+        } else {
+            self.key[..key.key_len()].copy_from_slice(key.ref_to_bytes());
+            self.key_len = key.key_len();
+        }
+
+        self.pad_key_into_hasher(IPAD_BYTE);
+
+        // check that the key had enough security level
+        if !allow_weak_keys && key.security_strength() < HASH::default().max_security_strength() {
+            Err(KeyMaterialError::SecurityStrength("HMAC::init(): provided key has a lower security strength than the instantiated HMAC"))?
+        } else {
+            Ok(())
+        }
+    }
+
     /// the out buffer can be oversized, but not less than the MIN_FIPS_DIGEST_LENGTH
     /// Returns the number of bytes written.
     fn do_final_internal_out(mut self, out: &mut [u8]) -> Result<usize, MACError> {
@@ -268,136 +291,95 @@ impl<HASH: Hash + Default> HMAC<HASH> {
     }
 }
 
-impl<HASH: Hash + Default> Default for HMAC<HASH> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<HASH: Hash + Default> KeyedAlgorithm for HMAC<HASH> {
-    fn allow_weak_keys(&mut self) {
-        self.allow_weak_keys = true;
-    }
-}
-
 // TODO: potential feature: add an interface that pre-computes the intermediate values (K XOR ipad) and (K XOR opad)
 // TODO for a given key as described in RFC2104 section 4.
 // TODO: This is essentially a "batch mode" where you want to perform many MACs or Verifications with the same key
 // TODO: against different data.
 
 impl<HASH: Hash + Default> MAC for HMAC<HASH> {
+
+    /// Create a new HMAC instance with the given key.
+    ///
+    /// This is a common constructor whether creating or verifying a MAC value.
+    ///
+    /// Key / Salt is optional, which is indicated by providing an uninitialized KeyMaterial object of length zero,
+    /// the capacity is irrelevant, so KeyMateriol256::new() or KeyMaterial_internal::<0>::new() would both count as an absent salt.
+    ///
+    /// # Note about the security strength of the provided key:
+    /// If you initialize the MAC with a key that is tagged at a lower [SecurityStrength] than the
+    /// underlying hash function then [HMAC::new] will fail with the following error:
+    /// ```text
+    /// MACError::KeyMaterialError(KeyMaterialError::SecurityStrength("HMAC::init(): provided key has a lower security strength than the instantiated HMAC")
+    /// ```
+    /// There are situations in which it is completely reasonable and secure to provide low-entropy
+    /// (and sometimes all-zero) keys / salts; for these cases we have provided [HMAC::new_allow_weak_keys].
+    fn new(key: &impl KeyMaterial) -> Result<Self, MACError> {
+        let mut hmac = Self {
+            hasher: HASH::default(),
+            key: [0u8; LARGEST_HASHER_OUTPUT_LEN],
+            key_len: 0,
+        };
+        hmac.init(key, false)?;
+        Ok(hmac)
+    }
+
+    /// Create a new HMAC instance with the given key.
+    ///
+    /// This constructor completely ignores the [SecurityStrength] tag on the input key and will "just work".
+    /// This should be used if you really do need to use a weak key, such as an all-zero salt,
+    /// but use of this constructor is discouraged and you should really be asking yourself why you need it;
+    /// in most cases it indicates that your key is not long enough to support the security level of this
+    /// HMAC instance, or the key was derived using algorithms at a lower security level, etc.
+    fn new_allow_weak_key(key: &impl KeyMaterial) -> Result<Self, MACError> {
+        let mut hmac = Self {
+            hasher: HASH::default(),
+            key: [0u8; LARGEST_HASHER_OUTPUT_LEN],
+            key_len: 0,
+        };
+        hmac.init(key, true)?;
+        Ok(hmac)
+    }
+    
     fn output_len(&self) -> usize {
         self.hasher.output_len()
     }
 
-    fn mac(&self, key: &impl KeyMaterial, data: &[u8]) -> Result<Vec<u8>, MACError> {
-        // TODO: make this match the hasher's output len
+    fn mac(self, data: &[u8]) -> Vec<u8> {
         let mut out = vec![0_u8; self.hasher.output_len()];
-        let bytes_written = self.mac_out(key, data, &mut out)?;
-        Ok(out[..bytes_written].to_vec())
+        let bytes_written = self.mac_out(data, &mut out).expect("HMAC::mac(): should not have failed because we gave it a sufficiently large output buffer to meet FIPS rules.");
+        out[..bytes_written].to_vec()
     }
 
-    fn mac_out(&self, key: &impl KeyMaterial, data: &[u8], mut out: &mut [u8]) -> Result<usize, MACError> {
-        let mut hmac = Self::default();
-
-        // if init throws an error about the key's security strength, we want to catch it and return it
-        // at the end.
-        match hmac.init(key) {
-            Ok(()) => { /* good */ },
-            Err(MACError::KeyMaterialError(KeyMaterialError::SecurityStrength(s))) => {
-                if !self.allow_weak_keys {
-                    return Err(MACError::KeyMaterialError(KeyMaterialError::SecurityStrength(s)));
-                } /* else, carry on */
-            },
-            Err(e) => { return Err(e) },
-        };
-        hmac.do_update(data)?;
-        hmac.do_final_out(&mut out)
+    fn mac_out(mut self, data: &[u8], mut out: &mut [u8]) -> Result<usize, MACError> {
+        self.do_update(data);
+        self.do_final_out(&mut out)
     }
 
-    fn verify(&self, key: &impl KeyMaterial, data: &[u8], mac: &[u8]) -> Result<(), MACError> {
-        let mut hmac = Self::default();
-
-        // Swallow an error about the key's security strength, since we're verifying anyway;
-        // it would be worse for overall security for someone to erroneously think the verification passed
-        // than to miss a warning about a potentially weak key that the verfier doesn't really control anyway.
-        match hmac.init(key) {
-            Ok(()) | Err(MACError::KeyMaterialError(KeyMaterialError::SecurityStrength(_))) => { /* fine */},
-            Err(e) => return Err(e),
-        }
-        hmac.do_update(data)?;
-        hmac.do_verify_final(mac)
+    fn verify(mut self, data: &[u8], mac: &[u8]) -> bool {
+        self.do_update(data);
+        self.do_verify_final(mac)
     }
 
-    /// Salt is optional, which is indicated by providing an uninitialized KeyMaterial object of length zero,
-    /// the capacity is irrelevant, so KeyMateriol256::new() or KeyMaterial_internal::<0>::new() would both count as an absent salt.
-    fn init(&mut self, key: &impl KeyMaterial) -> Result<(), MACError> {
-        // check that the key is of type KeyMaterial::MACKey
-        // Make an exception for the zero-length key or keys of zero entropy, which is allowed, and it's just a nuisance to
-        // force users to set KeyType::MACKey for a zero-length key.
-        if key.key_len() != 0 && key.key_type() != KeyType::Zeroized && key.key_type() != KeyType::MACKey {
-            return Err(MACError::KeyMaterialError(KeyMaterialError::InvalidKeyType(
-                "Key type must be a MAC key.",
-            )));
-        }
 
-        // import the key material as bytes.
-        // Per RFC 2104 Section 2, if the application key exceeds the block
-        // length of the underlying hashes algorithm, we apply a hash invocation
-        // over the key first.
-
-        if key.key_len() > self.hasher.block_bitlen() / 8 {
-            // then we have to pre-hash it -- use a new instance of the hasher rather than the internal one
-            HASH::default().hash_out(key.ref_to_bytes(), &mut self.key[..self.hasher.output_len()]);
-            self.key_len = self.hasher.output_len();
-
-        } else {
-            self.key[..key.key_len()].copy_from_slice(key.ref_to_bytes());
-            self.key_len = key.key_len();
-        }
-        
-        self.pad_key_into_hasher(IPAD_BYTE);
-        self.initialized = true;
-
-        // check that the key had enough security level
-        if !self.allow_weak_keys && key.security_strength() < HASH::default().max_security_strength() {
-            Err(KeyMaterialError::SecurityStrength("HMAC::init(): provided key has a lower security strength than the instantiated HMAC"))?
-        } else {
-            Ok(())
-        }
+    fn do_update(&mut self, data: &[u8]) {
+        self.hasher.do_update(data)
     }
 
-    fn do_update(&mut self, data: &[u8]) -> Result<(), MACError> {
-        if !self.initialized { return Err(MACError::InvalidState("do_update() before init()")) }  // TODO: is this actually necessary, or can it be designed so that this is structurally impossible?
-
-        Ok(self.hasher.do_update(data))
-    }
-
-    fn do_final(self) -> Result<Vec<u8>, MACError> {
-        if !self.initialized { return Err(MACError::InvalidState("do_update() before init()")) }  // TODO: is this actually necessary, or can it be designed so that this is structurally impossible?
-
+    fn do_final(self) -> Vec<u8> {
         let mut out = vec![0_u8; self.hasher.output_len()];
-        self.do_final_internal_out(&mut out)?;
-        Ok(out)
+        self.do_final_internal_out(&mut out).expect("HMAC::do_final(): should not have failed because we gave it a sufficiently large output buffer to meet FIPS rules.");
+        out
     }
 
     fn do_final_out(self, mut out: &mut [u8]) -> Result<usize, MACError> {
         self.do_final_internal_out(&mut out)
     }
 
-    fn do_verify_final(self, mac: &[u8]) -> Result<(), MACError> {
-        if !self.initialized { return Err(MACError::InvalidState("do_update() before init()")) }  // TODO: is this actually necessary, or can it be designed so that this is structurally impossible?
-
+    fn do_verify_final(self, mac: &[u8]) -> bool {
         let mut out = vec![0_u8; HASH::default().output_len()];
-        let output_len = self.do_final_internal_out(&mut out)?;
-
-        if mac.len() != output_len { return Err(MACError::InvalidLength("Provided MAC value is not the correct length")); }
-
-        if ct::ct_eq_bytes(mac, &out[..output_len]) {
-            Ok(())
-        } else {
-            Err(MACError::VerificationFailed)
-        }
+        let output_len = self.do_final_internal_out(&mut out).expect("HMAC::do_final(): should not have failed because we gave it a sufficiently large output buffer to meet FIPS rules.");
+        if mac.len() != output_len { return false }
+        ct::ct_eq_bytes(mac, &out[..output_len])
     }
 
     fn max_security_strength(&self) -> SecurityStrength {

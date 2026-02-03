@@ -34,7 +34,6 @@ pub enum MACError {
     InvalidLength(&'static str),
     InvalidState(&'static str),
     KeyMaterialError(KeyMaterialError),
-    VerificationFailed,
 }
 
 #[derive(Debug)]
