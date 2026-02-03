@@ -10,6 +10,7 @@ edition = "2024"
 core-interface = { path = "./crypto/core-interface", version = "0.1.0" }
 core-test-framework = { path = "./crypto/core-test-framework", version = "0.1.0"}
 hex = { path = "./crypto/hex", version = "0.1.0" }
+hkdf = { path = "./crypto/hkdf", version = "0.1.0"}
 hmac = { path = "./crypto/hmac", version = "0.1.0"}
 rng = { path = "./crypto/rng", version = "0.1.0" }
 sha2 = { path = "./crypto/sha2", version = "0.1.0"}

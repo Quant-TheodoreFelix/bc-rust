@@ -294,9 +294,9 @@ impl<HASH: Hash + Default> HMAC<HASH> {
     /// don't need to track state errors.
     fn init(&mut self, key: &impl KeyMaterial, allow_weak_keys: bool) -> Result<(), MACError> {
         // check that the key is of type KeyMaterial::MACKey
-        // Make an exception for the zero-length key or all-zero keys, which is allowed, and it's just a nuisance to
-        // force users to set KeyType::MACKey for a zero-length key.
-        if key.key_len() != 0 && key.key_type() != KeyType::Zeroized && key.key_type() != KeyType::MACKey {
+        // Make an exception for all-zero keys, which is allowed (which can be zero-length or non-zero-length,
+        // because it's just a nuisance to force users to set KeyType::MACKey for an all-zero key.
+        if ! (key.key_type() == KeyType::Zeroized || key.key_type() == KeyType::MACKey) {
             return Err(MACError::KeyMaterialError(KeyMaterialError::InvalidKeyType(
                 "Key type must be a MAC key.",
             )));

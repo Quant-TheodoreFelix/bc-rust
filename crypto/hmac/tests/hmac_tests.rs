@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod hmac_tests {
-    use core_interface::key_material::{KeyMaterial256, KeyMaterial512, KeyType};
+    use core_interface::key_material::{KeyMaterial256, KeyMaterial512, KeyMaterialInternal, KeyType};
     use core_interface::traits::{Algorithm, Hash, KeyMaterial, SecurityStrength, MAC};
     use core_test_framework::mac::TestFrameworkMAC;
     use hex;
@@ -19,7 +19,6 @@ mod hmac_tests {
         assert_eq!(zero_length_key.key_len(), 0);
         assert_eq!(zero_length_key.key_type(), KeyType::MACKey);
 
-        // todo: should this succeed or fail?
         let mut mac = HMAC::<SHA256>::new_allow_weak_key(&zero_length_key).unwrap();
         mac.do_update("Hi There".as_bytes());
         let output = mac.do_final();
@@ -105,14 +104,31 @@ mod hmac_tests {
     #[test]
     fn test_block_bitlen() {
         // give it a key that is exactly the block size
-        let key = KeyMaterial512::from_bytes_as_type(&vec![0x3cu8; SHA256::new().block_bitlen()/8], KeyType::MACKey).unwrap();
-        HMAC_SHA256::new(&key).unwrap().verify(b"Hi There", &hex::decode("4da0a0bb56f010db147b8f6e5f2dbecf7bb35ff00c8b9da31c9b94cc81815873").unwrap());
+        let key = KeyMaterialInternal::<1000>::from_bytes_as_type(&vec![0x3cu8; SHA256::new().block_bitlen()/8], KeyType::MACKey).unwrap();
+        assert!(HMAC_SHA256::new(&key).unwrap().verify(b"Hi There", &hex::decode("4da0a0bb56f010db147b8f6e5f2dbecf7bb35ff00c8b9da31c9b94cc81815873").unwrap()));
+
+        // Now give it a key that is larger than the block size and needs to be hashed down
+        let key = KeyMaterialInternal::<1000>::from_bytes_as_type(&vec![0x3cu8; SHA256::new().block_bitlen()/8 + 1], KeyType::MACKey).unwrap();
+        HMAC_SHA256::new(&key).unwrap().verify(b"Hi There", &hex::decode("5cb9475aba606afe8c82c2d1b3e1cfb1c814e8a72ce5a7b4fe43b0a0aac45144").unwrap());
     }
 
     #[test]
     fn security_strength_tests() {
-        // test: provided key has the corect length, but insufficient tagged security strength
+        // test: provided key has the correct length, but insufficient tagged security strength
         // HMAC should still work, but should return an error
+
+        // it works with a zero key (as new_allow_weak_key)
+        // zero-len ey
+        let mut zero_key = KeyMaterial256::default();
+        HMAC_SHA256::new_allow_weak_key(&zero_key).unwrap();
+
+        // non-zero len key of all-zero bytes
+        zero_key.allow_hazardous_operations();
+        zero_key.set_key_len(32).unwrap();
+        HMAC_SHA256::new_allow_weak_key(&zero_key).unwrap();
+
+        // but we don't allow zero-len keys that are not Zeroized or MACKey
+
 
         // init
         let mut key = KeyMaterial512::from_bytes_as_type(&DUMMY_SEED_512[..64], KeyType::MACKey).unwrap();
@@ -187,7 +203,7 @@ mod hmac_tests {
         // truncation of the mac value is considered a fail
         let verifier =  HMAC_SHA3_224::new(&key).unwrap();
         assert!(! verifier.verify(b"Polly want a cracker?", &mac_val[..mac_val.len() - 1]) );
-        
+
         // .. as is some extra bytes at the end
         let verifier =  HMAC_SHA3_224::new(&key).unwrap();
         mac_val.extend_from_slice(&[0u8; 4]);
