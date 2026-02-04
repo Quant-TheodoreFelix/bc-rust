@@ -2,7 +2,7 @@
 
 > [!WARNING]
 > This package is in ALPHA. 
-> Therefore, it should not be production-ready, and it will be evolving rapidly over the coming months.
+> Therefore, it should not be considered production-ready, and it will be evolving rapidly over the coming months.
 
 
 The Bouncy Castle Crypto package is a Java implementation of cryptographic algorithms, it was developed by the Legion of the Bouncy Castle, a registered Australian Charity, with a little help! The Legion, and the latest goings on with this package, can be found at https://www.bouncycastle.org.
