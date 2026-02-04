@@ -26,8 +26,9 @@ get_docstring_and_unwrap_for_files() {
     unwraps=$(cat $file| grep -o ".unwrap()" | wc -l)
     total_unwraps=$((total_unwraps + unwraps))
 
-    docstring_lines=$(cat $file| grep -o "^//!" | wc -l)
-    total_docstrings=$((total_docstrings + docstring_lines))
+    docstring_lines1=$(cat $file| grep -o "^//!" | wc -l)
+    docstring_lines2=$(cat $file| grep -o "///" | wc -l)
+    total_docstrings=$((total_docstrings + docstring_lines1 + docstring_lines2))
   done
 
   get_unwraps=$total_unwraps
@@ -70,10 +71,6 @@ analyze_crate() {
     tests_code="0"
     tests_unwraps="0"
   fi
-
-  # todo sed or awk or something to could docstring comments instead of real comments
-
-  # todo count .unwrap in tests
 
   echo
   echo $(basename $cratedir)":"
