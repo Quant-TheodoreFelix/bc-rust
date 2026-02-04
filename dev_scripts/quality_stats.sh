@@ -17,14 +17,19 @@ get_cloc_stats_for_files() {
 
 get_docstring_lines=""
 get_unwraps=""
-get_docstring_and_unwrap_for_files() {
+get_errs=""
+get_docstring_and_errors_for_files() {
   files=$1
 
   total_unwraps="0"
+  total_errs="0"
   total_docstrings="0"
   for file in $1; do
     unwraps=$(cat $file| grep -o ".unwrap()" | wc -l)
     total_unwraps=$((total_unwraps + unwraps))
+
+    errs=$(cat $file| grep -o "Err(" | wc -l)
+    total_errs=$((total_errs + errs))
 
     docstring_lines1=$(cat $file| grep -o "^//!" | wc -l)
     docstring_lines2=$(cat $file| grep -o "///" | wc -l)
@@ -32,6 +37,7 @@ get_docstring_and_unwrap_for_files() {
   done
 
   get_unwraps=$total_unwraps
+  get_errs=$total_errs
   get_docstring_lines=$total_docstrings
 }
 
@@ -39,6 +45,7 @@ crate_code_lines=""
 crate_docstring_lines=""
 crate_test_lines=""
 crate_code_unwraps=""
+crate_code_errs=""
 crate_test_unwraps=""
 analyze_crate() {
   cratedir=$1
@@ -51,21 +58,22 @@ analyze_crate() {
     code_code=$get_cloc_lines_code
 #    code_comments=$get_cloc_lines_comments
 
-    get_docstring_and_unwrap_for_files "$(find $cratedir/src -name "*.rs" &2>/dev/null)"
+    get_docstring_and_errors_for_files "$(find $cratedir/src -name "*.rs" &2>/dev/null)"
     code_docstring_lines=$get_docstring_lines
     code_unwraps=$get_unwraps
+    code_errs=$get_errs
   else
     code_code="0"
-#    code_comments="0"
     code_docstring_lines="0"
     code_unwraps="0"
+    code_errs="0"
   fi
 
   if [[ -d $cratedir/tests ]]; then
     get_cloc_stats_for_files "$(find $cratedir/tests -name "*.rs" &2>/dev/null)"
     tests_code=$get_cloc_lines_code
 
-    get_docstring_and_unwrap_for_files "$(find $cratedir/tests -name "*.rs" &2>/dev/null)"
+    get_docstring_and_errors_for_files "$(find $cratedir/tests -name "*.rs" &2>/dev/null)"
     tests_unwraps=$get_unwraps
   else
     tests_code="0"
@@ -80,6 +88,7 @@ analyze_crate() {
   echo "  test lines: $tests_code ($test_ratio test ratio)" # todo "(X% of code)"
   echo "  fallibility:"
   echo "    unwraps in core code: $code_unwraps"
+  echo "    Err() in core code: $code_errs"
   echo "    unwraps in test code: $tests_unwraps"
 
   # Return values
@@ -87,6 +96,7 @@ analyze_crate() {
   crate_docstring_lines=$code_docstring_lines
   crate_test_lines=$tests_code
   crate_code_unwraps=$code_unwraps
+  crate_code_errs=$code_errs
   crate_test_unwraps=$tests_unwraps
 }
 
@@ -98,6 +108,7 @@ analyze_subcrates() {
   total_docstring_lines="0"
   total_test_lines="0"
   total_code_unwraps="0"
+  total_code_errs="0"
   total_test_unwraps="0"
   for subcrate in $subcratedirs;
   do
@@ -108,6 +119,7 @@ analyze_subcrates() {
   total_docstring_lines=$(( total_docstring_lines + crate_docstring_lines ))
   total_test_lines=$(( total_test_lines + crate_test_lines ))
   total_code_unwraps=$(( total_code_unwraps + crate_code_unwraps ))
+  total_code_errs=$(( total_code_errs + crate_code_errs ))
   total_test_unwraps=$(( total_test_unwraps + crate_test_unwraps ))
   done
 
@@ -120,6 +132,7 @@ analyze_subcrates() {
   echo "  test lines: $total_test_lines ($test_ratio test ratio)" # todo "(X% of code)"
   echo "  fallibility:"
   echo "    unwraps in core code: $total_code_unwraps"
+  echo "    Err() in core code: $total_code_errs"
   echo "    unwraps in test code: $total_test_unwraps"
 }
 
