@@ -1,13 +1,20 @@
 //! HMAC-based Extract-and-Expand Key Derivation Function (HKDF) as per RFC5859, as allowed by
 //! NIST SP 800-56Cr2.
 //!
+//! # Usage
+//!
+//! Since HKDF uses `HMAC<HASH>` as its underlying primitive, most of what is said in the [HMAC] crate docs
+//! about instantiating HMAC objects applies here as well. Unlike HMAC, an HKDF object is created without
+//! an initial key, and will self-initialize the internal HMAC object as part of the [HKDF::extract] phase.
+//!
+//!
 //! # Examples
 //! ## Constructing an object
 //!
 //! HMAC objects can be constructed with any underlying hash function that implements [Hash].
-//! Type aliases string algorithm names are provided for the common HKDF-HASH algorithms.
+//! Type aliases are provided for the common HKDF-HASH algorithms.
 //!
-//! //! The following object instantiations are equivalent:
+//! The following object instantiations are equivalent:
 //!
 //! ```
 //! use hkdf::HKDF_SHA256;
@@ -19,11 +26,10 @@
 //! use sha2::SHA256;
 //! let hkdf = HKDF::<SHA256>::new();
 //! ```
-//! Additionally, the [Factory] crate contains a [KDFFactory] with additional convenience functions.
 //!
 //! ## Deriving a key via the [KDF] trait
 //! Being a Key Derivation Function (KDF), the objective of HKDF is to take input key material which is not
-//! directly usable for its intended purpose and transform into an output key.
+//! directly usable for its intended purpose and transform into a suitable output key.
 //! Typically, this takes one or both of the following forms:
 //!
 //! * Starting with a seed and mixing in additional input to diversify the output key (ie make it unique). An example of this would be starting with a secret seed and mixing in a public ID or URL to generate keys which are unique per URL.
@@ -33,7 +39,7 @@
 //!
 //! ```
 //! use core_interface::key_material::{KeyMaterial256, KeyType};
-//! use core_interface::traits::{KDF, KeyMaterial};
+//! use core_interface::traits::{KDF };
 //! use hkdf::HKDF_SHA256;
 //!
 //! let key = KeyMaterial256::from_bytes_as_type(
@@ -44,22 +50,98 @@
 //! let key = hkdf.derive_key(&key, b"extra input").unwrap();
 //! ```
 //!
-//! [derive_key] will produce a key the same length as the underlying hash function.
-//! Longer output can be requested by instead using [derive_key_out] and providing a larger output buffer, which will be filled.
+//! [KDF::derive_key] will produce a key the same length as the underlying hash function.
+//! Longer output can be requested by instead using [KDF::derive_key_out] and providing a larger output buffer,
+//! which will be filled.
 //!
-//! As with other uses of [KeyMaterial], the [derive_key] function will track the entropy of the input key material, and will set the entropy of the output key material accordingly.
+//! As with other uses of [KeyMaterial], the [KDF::derive_key] function will track the entropy of the input
+//! key material, and will set the entropy of the output key material accordingly.
 //!
-//! The [KDF] trait also provides the [derive_key_from_multiple] and [derive_key_from_multiple_out] functions, which allows for multiple inputs to be mixed into a single output key, and which allows for some advanced control of the underlying HKDF primitive.
+//! The [KDF] trait also provides the [KDF::derive_key_from_multiple] and [KDF::derive_key_from_multiple_out]
+//! functions, which allows for multiple inputs to be mixed into a single output key, and which allows
+//! for some advanced control of the underlying HKDF primitive.
 //!
 //!
 //! ## HKDF Extract-and-Expand
 //!
-//! The HKDF algorithm defined in RFC5896 and SP 800-56Cr2 is a two-step KDF, broken into an Extract step and an Expand step,
-//! which have additional HKDF-specific parameters beyond what is exposed by the functions of the [KDF] trait.
-//! 
-//! The full functionality of HKDF can be accessed via the [extract], [extract_out], [expand], [expand_out], [extract_and_expand] and [extract_and_expand_out] functions implemented on the [hkdf::HKDF] struct.
-//! In addition, since HKDF-Extract has no limit on the amount of data that can be provided as additional input, a streaming interface is provided via calling the following functions in sequence: [do_extract_init], zero or more calls to [do_extract_update_key], zero or more calls to [do_extract_update_bytes], and finishing with either [do_extract_final] or [do_extract_final_out].
-
+//! The HKDF algorithm defined in RFC5896 and SP 800-56Cr2 is a two-step KDF, broken into an Extract step
+//! which essentially absorbs entropy from the input key material,
+//! and an Expand step which produces the output key material of any requested size.
+//! This interface is essentially a pre-cursor to the [XOF] API which was introduced with SHA3; the main
+//! difference being that HKDF-Expand needs to be told up-front how much output to produce, whereas XOFs
+//! can stream output as needed.
+//!
+//! Naturally, the full two-step HKDF-Extract and HKDF-Expand interface is provided by the [HKDF] struct,
+//! and exposes additional HKDF-specific parameters beyond what is exposed by the functions of the [KDF] trait.
+//!
+//! The usage pattern here is flexible, but generally follows the pattern of first calling [HKDF::extract]
+//! with a `salt` and an input key material `ikm`, which produces a pseudorandom key `prk`.
+//! The `prk` will have a [KeyType] and [SecurityStrength] that results from combining the two provided input keys,
+//! The `prk` may be! used directly as a full-entropy cryptographic key.
+//!
+//! Since the extract step may be called with any number of input keys, a streaming interface is provided
+//! whereby streaming mode in initialized with a call to [HKDF::do_extract_init], and then
+//! repeated calls to [HKDF::do_extract_update_key] and [HKDF::do_extract_update_bytes] may be made.
+//! Entropy from the inputs keys provided via [HKDF::do_extract_update_key] are credited towards the output key,
+//! while bytes provided via [HKDF::do_extract_update_bytes] are not.
+//! One restriction here is that once you start provided un-credited bytes via [HKDF::do_extract_update_bytes],
+//! no more calls to [HKDF::do_extract_update_key] may be made.
+//! The streaming API is completed with a call to either [HKDF::do_extract_final] or [HKDF::do_extract_final_out].
+//!
+//! The second stage, [HKDF::expand_out] stretches the `prk` into a longer output key, still of the same [KeyType]
+//! and [SecurityStrength].
+//!
+//! A typical flow looks like this:
+//!
+//! ```
+//! use core_interface::key_material::{KeyMaterial, KeyMaterial256, KeyMaterialInternal, KeyType};
+//! use core_interface::traits::KDF;
+//! use hkdf::{HKDF, HKDF_SHA256};
+//! use sha2::{SHA256};
+//!
+//! // setup variables
+//! let salt = KeyMaterial256::from_bytes_as_type(
+//!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+//!             KeyType::MACKey).unwrap();
+//!
+//!  let ikm = KeyMaterial256::from_bytes_as_type(
+//!             b"\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00",
+//!             KeyType::MACKey).unwrap();
+//!
+//! let info = b"some extra context info";
+//!
+//!  // Use the streaming API to derive an output key of length 200 bytes.
+//!  let mut okm = KeyMaterialInternal::<200>::new();
+//!  let mut hkdf = HKDF::<SHA256>::default();
+//!  hkdf.do_extract_init(&salt).unwrap();
+//!  hkdf.do_extract_update_bytes(ikm.ref_to_bytes()).unwrap();
+//!  let prk = hkdf.do_extract_final().unwrap();
+//!  HKDF_SHA256::expand_out(&prk, info, 200, &mut okm2).unwrap();
+//! ```
+//!
+//! Various convenience wrapper functions are provided which can reduce the amount of boilerplate code
+//! for common cases.
+//! For example, the above code can be condensed to:
+//!
+//! ```
+//! use core_interface::key_material::{KeyMaterial, KeyMaterial256, KeyMaterialInternal, KeyType};
+//! use hkdf::{HKDF_SHA256};
+//!
+//! // setup variables
+//! let salt = KeyMaterial256::from_bytes_as_type(
+//!             b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+//!             KeyType::MACKey).unwrap();
+//!
+//!  let ikm = KeyMaterial256::from_bytes_as_type(
+//!             b"\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00",
+//!             KeyType::MACKey).unwrap();
+//!
+//! let info = b"some extra context info";
+//!
+//! // Use the one-shot API to derive an output key of length 200 bytes.
+//! let mut okm = KeyMaterialInternal::<200>::new();
+//! let _bytes_written = HKDF_SHA256::extract_and_expand_out(&salt, &ikm, info, 200, &mut okm).unwrap();
+//! ```
 
 //! TODO: examples
 
@@ -72,6 +154,11 @@ use core_interface::traits::{Hash, KDF, KeyMaterial, MAC, HashAlgParams, Securit
 use hmac::HMAC;
 use sha2::{SHA256, SHA512};
 use utils::{max, min};
+
+// Imports needed only for docs
+#[allow(unused_imports)]
+use core_interface::traits::XOF;
+// end doc-only imports
 
 
 /*** Constants ***/
@@ -222,7 +309,7 @@ impl<H: Hash + HashAlgParams + Default> HKDF<H> {
         Ok(prk)
     }
 
-    /// Same as [extract], but writes the output to a provided KeyMaterial buffer.
+    /// Same as [HKDF::extract], but writes the output to a provided KeyMaterial buffer.
     pub fn extract_out(
         salt: &impl KeyMaterial,
         ikm: &impl KeyMaterial,
@@ -301,7 +388,7 @@ impl<H: Hash + HashAlgParams + Default> HKDF<H> {
 
         let mut entropy = HkdfEntropyTracker::<H>::new();
         entropy.credit_entropy(prk);
-        
+
         #[allow(non_snake_case)]
         let N = L.div_ceil(hash_len) as u8;
         let mut bytes_written: usize = 0;
@@ -375,7 +462,8 @@ impl<H: Hash + HashAlgParams + Default> HKDF<H> {
         Self::expand_out(&prk, info, L, okm)
     }
 
-    /// This, together with [extract_update] and [extract_complete] provide a streaming interface for very long values of `ikm`.
+    /// This, together with [HKDF::do_extract_update_key], [HKDF::do_extract_update_bytes] and [HKDF::do_extract_final]
+    /// provide a streaming interface for very long values of `ikm`.
     /// In this mode, the entropy of `ikm` is untracked, and so only the entropy ef `salt` is taken into account
     /// when computing the entropy of the output `prk`.
     /// The KeyMaterial input parameters can be of any [KeyType]; but the type of the output will be set accordingly.
@@ -436,8 +524,8 @@ impl<H: Hash + HashAlgParams + Default> HKDF<H> {
     /// and therefore any IKM material provided through this interface will not count towards
     /// the entropy of the output key.
     ///
-    /// State machine: this function must be called after [do_extract_init], followed by
-    /// zero or more calls of [do_extract_key], and before [do_extract_final].
+    /// State machine: this function must be called after [HKDF::do_extract_init], followed by
+    /// zero or more calls of [HKDF::do_extract_update_key], and before [HKDF::do_extract_final].
     ///
     /// Returns the number of bits of entropy credited to this input key material, which is always 0 for this function.
     pub fn do_extract_update_bytes(&mut self, ikm_chunk: &[u8]) -> Result<usize, MACError> {
@@ -488,13 +576,13 @@ impl<H: Hash + HashAlgParams + Default> HKDF<H> {
 /// Additionally, section 4.1 says that when using HMAC as a KDF, the salt may be set to
 /// a string of HashLen zeros. All key material and additional_input is mapped to HKDF's ikm input.
 /// While this is not the only mode in which HKDF can be used as a KDF, this is considered the default mode
-/// that is exposed through [derive_key] and [derive_key_out].
-/// More advanced control of the inputs to HKDF can be achieved by using [derive_key_from_multiple] and
-/// [derive_key_from_multiple_out], or by using the [HKDF] impl directly.
+/// that is exposed through [KDF::derive_key] and [KDF::derive_key_out].
+/// More advanced control of the inputs to HKDF can be achieved by using [KDF::derive_key_from_multiple] and
+/// [KDF::derive_key_from_multiple_out], or by using the [HKDF] impl directly.
 ///
 /// Entropy tracking: this implementation will map entropy from the input keys to the output key.
 impl<H: Hash + HashAlgParams + Default> KDF for HKDF<H> {
-    /// This invokes [HKDF::expand_and_extract] with a zero salt and using the provided key as ikm.
+    /// This invokes [HKDF::extract_and_expand_out] with a zero salt and using the provided key as ikm.
     /// This provides a fixed-length output, which may be truncated as needed.
     fn derive_key(
         self,
@@ -507,7 +595,7 @@ impl<H: Hash + HashAlgParams + Default> KDF for HKDF<H> {
         Ok(Box::new(output_key))
     }
 
-    /// This invokes [HKDF::expand_and_extract] with a zero salt and using the provided key as ikm.
+    /// This invokes [HKDF::extract_and_expand_out] with a zero salt and using the provided key as ikm.
     /// This fills the provided [KeyMaterial] object in place of exposing a Length parameter.
     fn derive_key_out(
         self,
@@ -519,7 +607,7 @@ impl<H: Hash + HashAlgParams + Default> KDF for HKDF<H> {
         Ok(bytes_written)
     }
 
-    /// As with [derive_key] and [derive_key_out],
+    /// As with [KDF::derive_key] and [KDF::derive_key_out],
     /// This invokes HKDF in the extract_and_expand mode and maps the provided keys in the following way:
     /// - The first (0'th) key is used as the salt for HKDF.extract.
     /// - The remaining keys are concatenated to form HKDF's ikm parameter.
@@ -540,7 +628,7 @@ impl<H: Hash + HashAlgParams + Default> KDF for HKDF<H> {
     }
 
 
-    /// This behaves the same as [derive_key_from_multiple], except that it fills the provided
+    /// This behaves the same as [KDF::derive_key_from_multiple], except that it fills the provided
     /// [KeyMaterial] object in place of exposing a Length parameter.
     fn derive_key_from_multiple_out(
         self,
