@@ -186,179 +186,179 @@ mod i64_tests {
     }
 }
 
-#[cfg(test)]
-mod u64_tests {
-    use super::*;
-
-    #[test]
-    fn const_tests() {
-        assert_eq!(Condition::<u64>::TRUE.to_bool_var(), true);
-        assert_eq!(Condition::<u64>::FALSE.to_bool_var(), false);
-    }
-
-    #[test]
-    fn from_bool() {
-        assert_eq!(Condition::<u64>::new::<true>().to_bool_var(), true);
-        assert_eq!(Condition::<u64>::new::<false>().to_bool_var(), false);
-
-        let btrue: bool = true;
-        let bfalse: bool = false;
-        assert_eq!(Condition::<u64>::from_bool(btrue).to_bool_var(), true);
-        assert_eq!(Condition::<u64>::from_bool(bfalse).to_bool_var(), false);
-    }
-
-    #[test]
-    fn is_bit_set() {
-        assert_eq!(Condition::<u64>::is_bit_set(1, 0).to_bool_var(), true);
-        assert_eq!(Condition::<u64>::is_bit_set(1, 1).to_bool_var(), false);
-        assert_eq!(Condition::<u64>::is_bit_set(8, 3).to_bool_var(), true);
-    }
-
-    // MikeO: TODO ?? What does "negative" mean for an unsigned value?
-    #[test]
-    fn is_negative() {
-        // assert_eq!(Condition::<u64>::is_negative(-1).to_bool_var(), true); // << This doesn't compile, for obvious reasons.
-        assert_eq!(Condition::<u64>::is_negative(0).to_bool_var(), false);
-        assert_eq!(Condition::<u64>::is_negative(1).to_bool_var(), false);
-        assert_eq!(Condition::<u64>::is_negative(1 << 12).to_bool_var(), false);
-    }
-
-    #[test]
-    fn is_not_zero() {
-        assert_eq!(Condition::<u64>::is_not_zero(1).to_bool_var(), true);
-        assert_eq!(Condition::<u64>::is_not_zero(0).to_bool_var(), false);
-        assert_eq!(Condition::<u64>::is_not_zero(1 << 12).to_bool_var(), true);
-    }
-
-    #[test]
-    fn is_zero() {
-        assert_eq!(Condition::<u64>::is_zero(1).to_bool_var(), false);
-        assert_eq!(Condition::<u64>::is_zero(0).to_bool_var(), true);
-        assert_eq!(Condition::<u64>::is_zero(1 << 12).to_bool_var(), false);
-    }
-
-    // TODO: turn this back on once implemented
-    #[test]
-    fn is_lt() {
-        assert_eq!(Condition::<u64>::is_lt(1, 2).to_bool_var(), true);
-        assert_eq!(Condition::<u64>::is_lt(2, 1).to_bool_var(), false);
-        assert_eq!(Condition::<u64>::is_lt(2, 2).to_bool_var(), false);
-        assert_eq!(Condition::<u64>::is_lt(0, 1).to_bool_var(), true);
-
-        let mut i: u64 = 0;
-        assert_eq!(Condition::<u64>::is_lt(i, 1).to_bool_var(), true);
-        i = 1;
-        assert_eq!(Condition::<u64>::is_lt(i, 1).to_bool_var(), false);
-    }
-
-    // TODO: turn this back on once implemented
-    // #[test]
-    // fn is_lte() {
-    //     assert_eq!(Condition::<u64>::is_lte(1, 2).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_lte(2, 1).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_lte(2, 2).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_lte(0, 1).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_lte(-100, -99).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_lte(-98, 98).to_bool_var(), true);
-    // }
-
-    // #[test]
-    // fn is_gt() {
-    //     assert_eq!(Condition::<u64>::is_gt(1, 2).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_gt(2, 1).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_gt(2, 2).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_gt(0, 1).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_gt(-100, -99).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_gt(-98, 98).to_bool_var(), false);
-    // }
-
-    // #[test]
-    // fn is_gte() {
-    //     assert_eq!(Condition::<u64>::is_gte(1, 2).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_gte(2, 1).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_gte(2, 2).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_gte(0, 1).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_gte(-100, -99).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_gte(-98, 98).to_bool_var(), false);
-    // }
-
-    // TODO: turn this back on once implemented
-    // #[test]
-    // fn is_in_range() {
-    //     assert_eq!(Condition::<u64>::is_within_range(1, 0, 2).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_within_range(2, 0, 1).to_bool_var(), false);
-    //     assert_eq!(Condition::<u64>::is_within_range(1, -5, 2).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_within_range(0, -5, 5).to_bool_var(), true);
-    //     assert_eq!(Condition::<u64>::is_within_range(1, 0, 0).to_bool_var(), false);
-    // }
-
-    #[test]
-    fn is_in_list() {
-        assert_eq!(Condition::<u64>::is_in_list(1, &[1, 2, 3]).to_bool_var(), true);
-        assert_eq!(Condition::<u64>::is_in_list(4, &[1, 2, 3]).to_bool_var(), false);
-        assert_eq!(Condition::<u64>::is_in_list(3, &[1, 2, 3, 3, 3, 3]).to_bool_var(), true);
-    }
-
-    #[test]
-    fn test_mov() {
-        let src = 1u64;
-        let mut dst = 2u64;
-        let c1 = Condition::<u64>::TRUE;
-        c1.mov(src, &mut dst);
-        assert_eq!(dst, 1);
-
-        let c2 = Condition::<u64>::FALSE;
-        dst = 2;
-        c2.mov(src, &mut dst);
-        assert_eq!(dst, 2);
-    }
-
-    // MikeO: TODO: I don't understand what this function does well enough to test it.
-    // #[test]
-    // fn test_negate() {
-    //     let c1 = Condition::<u64>::TRUE;
-    //     assert_eq!(c1.negate(1), -1);
-    //     assert_eq!(c1.negate(0), 0);
-    //     assert_eq!(c1.negate(-1), 1);
-    //
-    //     let c2 = Condition::<i64>::FALSE;
-    //     assert_eq!(c2.negate(1), 1);
-    //     assert_eq!(c2.negate(0), 0);
-    //     assert_eq!(c2.negate(-1),-1);
-    // }
-
-    // MikeO: TODO: I don't understand what this function does well enough to test it.
-    #[test]
-    fn test_or_halves() {
-        todo!()
-    }
-
-    #[test]
-    fn test_select() {
-        let c = Condition::<u64>::TRUE;
-        assert_eq!(c.select(1, 2), 1);
-        assert_eq!((!c).select(1, 2), 2);
-
-        // or the inverse behaviour if you start with 'false'.
-        let cfalse = Condition::<u64>::FALSE;
-        assert_eq!(cfalse.select(1, 2), 2);
-        assert_eq!((!cfalse).select(1, 2), 1);
-    }
-
-    #[test]
-    fn test_swap() {
-        let c = Condition::<i64>::from_bool::<true>();
-        let (lhs, rhs) = c.swap(1, 2);
-        assert_eq!(lhs, 2);
-        assert_eq!(rhs, 1);
-
-        // or the inverse behaviour if you start with 'false'.
-        let c = Condition::<i64>::from_bool::<false>();
-        let (lhs, rhs) = c.swap(1, 2);
-        assert_eq!(lhs, 1);
-        assert_eq!(rhs, 2);
-    }
-}
+// #[cfg(test)]
+// mod u64_tests {
+//     use super::*;
+//
+//     #[test]
+//     fn const_tests() {
+//         assert_eq!(Condition::<u64>::TRUE.to_bool_var(), true);
+//         assert_eq!(Condition::<u64>::FALSE.to_bool_var(), false);
+//     }
+//
+//     #[test]
+//     fn from_bool() {
+//         assert_eq!(Condition::<u64>::new::<true>().to_bool_var(), true);
+//         assert_eq!(Condition::<u64>::new::<false>().to_bool_var(), false);
+//
+//         let btrue: bool = true;
+//         let bfalse: bool = false;
+//         assert_eq!(Condition::<u64>::from_bool(btrue).to_bool_var(), true);
+//         assert_eq!(Condition::<u64>::from_bool(bfalse).to_bool_var(), false);
+//     }
+//
+//     #[test]
+//     fn is_bit_set() {
+//         assert_eq!(Condition::<u64>::is_bit_set(1, 0).to_bool_var(), true);
+//         assert_eq!(Condition::<u64>::is_bit_set(1, 1).to_bool_var(), false);
+//         assert_eq!(Condition::<u64>::is_bit_set(8, 3).to_bool_var(), true);
+//     }
+//
+//     // MikeO: TODO ?? What does "negative" mean for an unsigned value?
+//     #[test]
+//     fn is_negative() {
+//         // assert_eq!(Condition::<u64>::is_negative(-1).to_bool_var(), true); // << This doesn't compile, for obvious reasons.
+//         assert_eq!(Condition::<u64>::is_negative(0).to_bool_var(), false);
+//         assert_eq!(Condition::<u64>::is_negative(1).to_bool_var(), false);
+//         assert_eq!(Condition::<u64>::is_negative(1 << 12).to_bool_var(), false);
+//     }
+//
+//     #[test]
+//     fn is_not_zero() {
+//         assert_eq!(Condition::<u64>::is_not_zero(1).to_bool_var(), true);
+//         assert_eq!(Condition::<u64>::is_not_zero(0).to_bool_var(), false);
+//         assert_eq!(Condition::<u64>::is_not_zero(1 << 12).to_bool_var(), true);
+//     }
+//
+//     #[test]
+//     fn is_zero() {
+//         assert_eq!(Condition::<u64>::is_zero(1).to_bool_var(), false);
+//         assert_eq!(Condition::<u64>::is_zero(0).to_bool_var(), true);
+//         assert_eq!(Condition::<u64>::is_zero(1 << 12).to_bool_var(), false);
+//     }
+//
+//     // TODO: turn this back on once implemented
+//     #[test]
+//     fn is_lt() {
+//         assert_eq!(Condition::<u64>::is_lt(1, 2).to_bool_var(), true);
+//         assert_eq!(Condition::<u64>::is_lt(2, 1).to_bool_var(), false);
+//         assert_eq!(Condition::<u64>::is_lt(2, 2).to_bool_var(), false);
+//         assert_eq!(Condition::<u64>::is_lt(0, 1).to_bool_var(), true);
+//
+//         let mut i: u64 = 0;
+//         assert_eq!(Condition::<u64>::is_lt(i, 1).to_bool_var(), true);
+//         i = 1;
+//         assert_eq!(Condition::<u64>::is_lt(i, 1).to_bool_var(), false);
+//     }
+//
+//     // TODO: turn this back on once implemented
+//     // #[test]
+//     // fn is_lte() {
+//     //     assert_eq!(Condition::<u64>::is_lte(1, 2).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_lte(2, 1).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_lte(2, 2).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_lte(0, 1).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_lte(-100, -99).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_lte(-98, 98).to_bool_var(), true);
+//     // }
+//
+//     // #[test]
+//     // fn is_gt() {
+//     //     assert_eq!(Condition::<u64>::is_gt(1, 2).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_gt(2, 1).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_gt(2, 2).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_gt(0, 1).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_gt(-100, -99).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_gt(-98, 98).to_bool_var(), false);
+//     // }
+//
+//     // #[test]
+//     // fn is_gte() {
+//     //     assert_eq!(Condition::<u64>::is_gte(1, 2).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_gte(2, 1).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_gte(2, 2).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_gte(0, 1).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_gte(-100, -99).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_gte(-98, 98).to_bool_var(), false);
+//     // }
+//
+//     // TODO: turn this back on once implemented
+//     // #[test]
+//     // fn is_in_range() {
+//     //     assert_eq!(Condition::<u64>::is_within_range(1, 0, 2).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_within_range(2, 0, 1).to_bool_var(), false);
+//     //     assert_eq!(Condition::<u64>::is_within_range(1, -5, 2).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_within_range(0, -5, 5).to_bool_var(), true);
+//     //     assert_eq!(Condition::<u64>::is_within_range(1, 0, 0).to_bool_var(), false);
+//     // }
+//
+//     #[test]
+//     fn is_in_list() {
+//         assert_eq!(Condition::<u64>::is_in_list(1, &[1, 2, 3]).to_bool_var(), true);
+//         assert_eq!(Condition::<u64>::is_in_list(4, &[1, 2, 3]).to_bool_var(), false);
+//         assert_eq!(Condition::<u64>::is_in_list(3, &[1, 2, 3, 3, 3, 3]).to_bool_var(), true);
+//     }
+//
+//     #[test]
+//     fn test_mov() {
+//         let src = 1u64;
+//         let mut dst = 2u64;
+//         let c1 = Condition::<u64>::TRUE;
+//         c1.mov(src, &mut dst);
+//         assert_eq!(dst, 1);
+//
+//         let c2 = Condition::<u64>::FALSE;
+//         dst = 2;
+//         c2.mov(src, &mut dst);
+//         assert_eq!(dst, 2);
+//     }
+//
+//     // MikeO: TODO: I don't understand what this function does well enough to test it.
+//     // #[test]
+//     // fn test_negate() {
+//     //     let c1 = Condition::<u64>::TRUE;
+//     //     assert_eq!(c1.negate(1), -1);
+//     //     assert_eq!(c1.negate(0), 0);
+//     //     assert_eq!(c1.negate(-1), 1);
+//     //
+//     //     let c2 = Condition::<i64>::FALSE;
+//     //     assert_eq!(c2.negate(1), 1);
+//     //     assert_eq!(c2.negate(0), 0);
+//     //     assert_eq!(c2.negate(-1),-1);
+//     // }
+//
+//     // MikeO: TODO: I don't understand what this function does well enough to test it.
+//     #[test]
+//     fn test_or_halves() {
+//         todo!()
+//     }
+//
+//     #[test]
+//     fn test_select() {
+//         let c = Condition::<u64>::TRUE;
+//         assert_eq!(c.select(1, 2), 1);
+//         assert_eq!((!c).select(1, 2), 2);
+//
+//         // or the inverse behaviour if you start with 'false'.
+//         let cfalse = Condition::<u64>::FALSE;
+//         assert_eq!(cfalse.select(1, 2), 2);
+//         assert_eq!((!cfalse).select(1, 2), 1);
+//     }
+//
+//     #[test]
+//     fn test_swap() {
+//         let c = Condition::<i64>::from_bool::<true>();
+//         let (lhs, rhs) = c.swap(1, 2);
+//         assert_eq!(lhs, 2);
+//         assert_eq!(rhs, 1);
+//
+//         // or the inverse behaviour if you start with 'false'.
+//         let c = Condition::<i64>::from_bool::<false>();
+//         let (lhs, rhs) = c.swap(1, 2);
+//         assert_eq!(lhs, 1);
+//         assert_eq!(rhs, 2);
+//     }
+// }
 
 #[cfg(test)]
 mod generic_impl_tests {

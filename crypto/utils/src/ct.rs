@@ -136,93 +136,93 @@ impl Condition<i64> {
     }
 }
 
-impl Condition<u64> {
-    pub const TRUE: Self = Self(1);
-    pub const FALSE: Self = Self(0);
-
-    pub const fn new<const VALUE: bool>() -> Self {
-        Self((VALUE as u64).wrapping_neg())
-    }
-
-    pub const fn from_bool(value: bool) -> Self {
-        Self((value as u64).wrapping_neg())
-    }
-
-    pub const fn is_bit_set(value: u64, bit: u64) -> Self {
-        Self(((value >> bit) & 1).wrapping_neg())
-    }
-
-    // MikeO: TODO ?? What does "negative" mean for an unsigned value?
-    pub const fn is_negative(value: u64) -> Self {
-        Self(((value as i64) >> 63) as u64)
-    }
-
-    pub const fn is_not_zero(value: u64) -> Self {
-        Self::is_negative(Self::or_halves(value).wrapping_neg())
-    }
-
-    pub const fn is_zero(value: u64) -> Self {
-        Self::is_negative(Self::or_halves(value).wrapping_sub(1))
-    }
-
-    // MikeO: TODO: I borrowed this formula from Botan, but rust complains about u64 subtraction overflow if x < y, so this works in C but won't work in rust.
-    // MikeO: TODO: I played with u64.wrapping_sub(y) but that doesn't work either.
-    pub const fn is_lt(x: u64, y: u64) -> Self {
-        Self::is_zero(x ^ ((x ^ y) | (x.wrapping_sub(y)) ^ x))
-    }
-
-    // Note: haven't found a clever way to make this const, since it either needs a (non-const) not (!) or a boolean OR is_zero.
-    // pub fn is_lte(x: i64, y: i64) -> Self { !Self::is_gt(x, y) }
-
-    // pub const fn is_gt(x: i64, y: i64) -> Self { Self::is_lt(y, x) }
-
-    // Note: haven't found a clever way to make this const, since it either needs a (non-const) not (!) or a boolean OR is_zero.
-    // pub fn is_gte(x: i64, y: i64) -> Self { !Self::is_lt(x, y) }
-
-    pub fn is_in_list(value: u64, list: &[u64]) -> Self {
-        // Research question: is this actually constant-time?
-        // A clever compiler might turn this into a short-circuiting loop.
-        // A quick google search shows that rust doesn't have the ability to annotate specific code blocks
-        // as no-optimize; the only option is to insert direct assembly.
-
-        let mut c = Self::FALSE;
-        for i in 0..list.len() {
-            let diff = value ^ list[i];
-            c |= Condition::<u64>::is_zero(diff);
-        }
-
-        c
-    }
-
-    pub fn mov(self, src: u64, dst: &mut u64) {
-        *dst = self.select(src, *dst);
-    }
-
-    // MikeO: TODO: This needs a docstring because I have no idea what this does.
-    pub const fn negate(self, value: u64) -> u64 {
-        (value ^ self.0).wrapping_sub(self.0)
-    }
-
-    const fn or_halves(value: u64) -> u64 {
-        (value & 0xFFFFFFFF) | (value >> 32)
-    }
-
-    pub const fn select(self, true_value: u64, false_value: u64) -> u64 {
-        (true_value & self.0) | (false_value & !self.0)
-    }
-
-    pub const fn swap(self, lhs: u64, rhs: u64) -> (u64, u64) {
-        (self.select(rhs, lhs), self.select(lhs, rhs))
-    }
-
-    pub const fn to_bool_var(self) -> bool {
-        self.0 != 0
-    }
-}
-
-// TODO: Once we get u64 working, then do u8 and change CTBase64 to use this.
+// TODO: ... this doesn't ... work. We should get this working and then then do u8.
+// TODO: then and change Hex and Base64 to use this.
 // TODO: (there's probably no noticeable performance difference u8 and u64 bit ops on a 64-bit machine,
 // TODO:  but there would be on a 8, 16, or 32-bit machine.)
+// impl Condition<u64> {
+//     pub const TRUE: Self = Self(1);
+//     pub const FALSE: Self = Self(0);
+// 
+//     pub const fn new<const VALUE: bool>() -> Self {
+//         Self((VALUE as u64).wrapping_neg())
+//     }
+// 
+//     pub const fn from_bool(value: bool) -> Self {
+//         Self((value as u64).wrapping_neg())
+//     }
+// 
+//     pub const fn is_bit_set(value: u64, bit: u64) -> Self {
+//         Self(((value >> bit) & 1).wrapping_neg())
+//     }
+// 
+//     // MikeO: TODO ?? What does "negative" mean for an unsigned value?
+//     pub const fn is_negative(value: u64) -> Self {
+//         Self(((value as i64) >> 63) as u64)
+//     }
+// 
+//     pub const fn is_not_zero(value: u64) -> Self {
+//         Self::is_negative(Self::or_halves(value).wrapping_neg())
+//     }
+// 
+//     pub const fn is_zero(value: u64) -> Self {
+//         Self::is_negative(Self::or_halves(value).wrapping_sub(1))
+//     }
+// 
+//     // MikeO: TODO: I borrowed this formula from Botan, but rust complains about u64 subtraction overflow if x < y, so this works in C but won't work in rust.
+//     // MikeO: TODO: I played with u64.wrapping_sub(y) but that doesn't work either.
+//     pub const fn is_lt(x: u64, y: u64) -> Self {
+//         Self::is_zero(x ^ ((x ^ y) | (x.wrapping_sub(y)) ^ x))
+//     }
+// 
+//     // Note: haven't found a clever way to make this const, since it either needs a (non-const) not (!) or a boolean OR is_zero.
+//     // pub fn is_lte(x: i64, y: i64) -> Self { !Self::is_gt(x, y) }
+// 
+//     // pub const fn is_gt(x: i64, y: i64) -> Self { Self::is_lt(y, x) }
+// 
+//     // Note: haven't found a clever way to make this const, since it either needs a (non-const) not (!) or a boolean OR is_zero.
+//     // pub fn is_gte(x: i64, y: i64) -> Self { !Self::is_lt(x, y) }
+// 
+//     pub fn is_in_list(value: u64, list: &[u64]) -> Self {
+//         // Research question: is this actually constant-time?
+//         // A clever compiler might turn this into a short-circuiting loop.
+//         // A quick google search shows that rust doesn't have the ability to annotate specific code blocks
+//         // as no-optimize; the only option is to insert direct assembly.
+// 
+//         let mut c = Self::FALSE;
+//         for i in 0..list.len() {
+//             let diff = value ^ list[i];
+//             c |= Condition::<u64>::is_zero(diff);
+//         }
+// 
+//         c
+//     }
+// 
+//     pub fn mov(self, src: u64, dst: &mut u64) {
+//         *dst = self.select(src, *dst);
+//     }
+// 
+//     // MikeO: TODO: This needs a docstring because I have no idea what this does.
+//     pub const fn negate(self, value: u64) -> u64 {
+//         (value ^ self.0).wrapping_sub(self.0)
+//     }
+// 
+//     const fn or_halves(value: u64) -> u64 {
+//         (value & 0xFFFFFFFF) | (value >> 32)
+//     }
+// 
+//     pub const fn select(self, true_value: u64, false_value: u64) -> u64 {
+//         (true_value & self.0) | (false_value & !self.0)
+//     }
+// 
+//     pub const fn swap(self, lhs: u64, rhs: u64) -> (u64, u64) {
+//         (self.select(rhs, lhs), self.select(lhs, rhs))
+//     }
+// 
+//     pub const fn to_bool_var(self) -> bool {
+//         self.0 != 0
+//     }
+// }
 
 impl<T> BitAnd for Condition<T>
 where
