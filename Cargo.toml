@@ -1,5 +1,5 @@
 [workspace]
-members = ["crypto/*"]
+members = ["cli", "libbc-rust","crypto/*"]
 
 [workspace.package]
 edition = "2024"
@@ -7,6 +7,8 @@ edition = "2024"
 [workspace.dependencies]
 
 # *** Internal Dependencies ***
+base64 = { path = "./crypto/base64", version = "0.1.0"}
+cli = { path = "./cli", version = "0.1.0"}
 core-interface = { path = "./crypto/core-interface", version = "0.1.0" }
 core-test-framework = { path = "./crypto/core-test-framework", version = "0.1.0"}
 factory = { path = "./crypto/factory", version = "0.1.0"}
