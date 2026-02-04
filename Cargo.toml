@@ -26,3 +26,4 @@ criterion = "0.8.1" # only for benchmarking, not used in lib or cli build
 
 [profile.release]
 lto = "thin"
+#strip = "debuginfo"
