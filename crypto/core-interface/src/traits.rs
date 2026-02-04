@@ -15,7 +15,7 @@ pub trait Algorithm {
     const MAX_SECURITY_STRENGTH: SecurityStrength;
 }
 
-pub trait Hash {
+pub trait Hash : Default {
     /// The size of the internal block in bits -- needed by functions such as HMAC to compute security parameters.
     fn block_bitlen(&self) -> usize;
 
@@ -44,7 +44,11 @@ pub trait Hash {
 
     /// Finish absorbing input and produce the hashes output.
     /// Consumes self, so this must be the final call to this object.
-    /// will be placed in the first [Hash::output_len] bytes.
+    ///
+    /// If the provided buffer is smaller than the hash's output length, the output will be truncated.
+    /// If the provided buffor is larger than the hash's output length, the output  will be placed in
+    /// the first [Hash::output_len] bytes.
+    ///
     /// The return value is the number of bytes written.
     fn do_final_out(self, output: &mut [u8]) -> usize;
 
@@ -76,7 +80,9 @@ pub trait HashAlgParams: Algorithm {
     const BLOCK_LEN: usize;
 }
 
-pub trait KDF {
+/// A Key Derivation Function (KDF) is a function that takes in one or more input key and some unstructured
+/// additional input, and uses them to produces a derived key.
+pub trait KDF : Default {
     /// Implementations of this function are capable of deriving an output key from an input key,
     /// assuming that they have been properly initialized.
     ///
@@ -190,6 +196,8 @@ pub trait KDF {
 ///
 /// Note that the MAC key is not represented in this trait because it is provided to the MAC algorithm
 /// as part of its new functions.
+///
+/// MACs do not implement Default because they do not have a sensible no-args constructor.
 pub trait MAC: Sized {
 
     /// Create a new MAC instance with the given key.
@@ -326,7 +334,7 @@ impl SecurityStrength {
 /// be used by applications that intend to submit to FIPS certification as it more closely aligns with the
 /// requirements of SP 800-90A.
 /// Note: this interface produces bytes. If you want a [KeyMaterial], then use [KeyMaterialInternal::from_rng].
-pub trait RNG {
+pub trait RNG : Default {
     // TODO: add back once we figure out streaming interaction with entropy sources.
     // fn add_seed_bytes(&mut self, additional_seed: &[u8]) -> Result<(), RNGError>;
 
@@ -363,7 +371,7 @@ pub trait RNG {
 /// to break anonymity-preserving technology.
 /// Applications that require the arbitrary-length output of an XOF, but also care about these
 /// distinguishing attacks should consider adding a cryptographic salt to diversify the inputs.
-pub trait XOF {
+pub trait XOF : Default {
     /// A static one-shot API that digests the input data and produces `result_len` bytes of output.
     fn hash_xof(self, data: &[u8], result_len: usize) -> Vec<u8>;
 
