@@ -5,7 +5,7 @@
 > Therefore, it should not be considered production-ready, and it will be evolving rapidly over the coming months.
 
 
-The Bouncy Castle Crypto package is a Java implementation of cryptographic algorithms, it was developed by the Legion of the Bouncy Castle, a registered Australian Charity, with a little help! The Legion, and the latest goings on with this package, can be found at https://www.bouncycastle.org.
+The Bouncy Castle Crypto package is a Rust implementation of cryptographic algorithms, it was developed by the Legion of the Bouncy Castle, a registered Australian Charity, with a little help! The Legion, and the latest goings on with this package, can be found at https://www.bouncycastle.org.
 
 The aim of this package is to bring the Bouncy Castle team's experience building easy-to-use and FIPS-validated cryptography to Rust. The build system is designed so that you can build the entire library, a single algorithm, or anything you need. It also comes with a command-line.
 
