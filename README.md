@@ -32,4 +32,5 @@ cargo build -p sha3
 ... or any other cargo magic that you wish :)
 
 ## Legal
-Except where otherwise stated, this software is distributed under a license based on the MIT X Consortium license. To view the license, see here. The OpenPGP library also includes a modified BZIP2 library which is licensed under the Apache Software License, Version 2.0.
+
+Except where otherwise stated, this software is distributed under a license based on the MIT X Consortium license. To view the license, [see here](https://www.bouncycastle.org/licence.html). The OpenPGP library also includes a modified BZIP2 library which is licensed under the [Apache Software License, Version 2.0](https://www.apache.org/licenses/). 
