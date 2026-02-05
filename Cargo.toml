@@ -1,5 +1,5 @@
 [workspace]
-members = ["cli", "libbc-rust","crypto/*"]
+members = [ "cli","crypto/*" ]
 
 [workspace.package]
 edition = "2024"
@@ -27,3 +27,21 @@ criterion = "0.8.1" # only for benchmarking, not used in lib or cli build
 [profile.release]
 lto = "thin"
 #strip = "debuginfo"
+
+
+# libbc-rust
+[package]
+name = "bc-rust"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+base64.workspace = true
+core-interface.workspace = true
+factory.workspace = true
+hex.workspace = true
+hkdf.workspace = true
+hmac.workspace = true
+rng.workspace = true
+sha2.workspace = true
+sha3.workspace = true

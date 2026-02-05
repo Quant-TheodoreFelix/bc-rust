@@ -127,6 +127,7 @@ enum Subcommands {
     /// logged in shell history. Use the file-based input instead.
     HMAC_SHA256 {
         /// The MAC key in hex.
+        /// The `key_file` option is preferred to avoid leaving key material in command history.
         #[arg(long)]
         key: Option<String>,
 
@@ -150,6 +151,7 @@ enum Subcommands {
     /// logged in shell history. Use the file-based input instead.
     HMAC_SHA512 {
         /// The MAC key in hex.
+        /// The `key_file` option is preferred to avoid leaving key material in command history.
         #[arg(long)]
         key: Option<String>,
 
@@ -175,7 +177,7 @@ enum Subcommands {
     /// logged in shell history. Use the file-based input instead.
     HKDF_SHA256 {
         /// The salt value in hex.
-        /// The [salt_file] option is preferred to avoid leaving key material in command history.
+        /// The `salt_file` option is preferred to avoid leaving key material in command history.
         #[arg(long)]
         salt: Option<String>,
 
@@ -185,7 +187,7 @@ enum Subcommands {
         salt_file: Option<String>,
 
         /// An Input Keying Material in hex.
-        /// The [ikm_file] option is preferred to avoid leaving key material in command history.
+        /// The `ikm_file` option is preferred to avoid leaving key material in command history.
         #[arg(long)]
         ikm: Option<String>,
 
@@ -219,7 +221,7 @@ enum Subcommands {
     /// logged in shell history. Use the file-based input instead.
     HKDF_SHA512 {
         /// The salt value in hex.
-        /// The [salt_file] option is preferred to avoid leaving key material in command history.
+        /// The `salt_file` option is preferred to avoid leaving key material in command history.
         #[arg(long)]
         salt: Option<String>,
 
@@ -229,7 +231,7 @@ enum Subcommands {
         salt_file: Option<String>,
 
         /// An Input Keying Material in hex.
-        /// The [ikm_file] option is preferred to avoid leaving key material in command history.
+        /// The `ikm_file` option is preferred to avoid leaving key material in command history.
         #[arg(long)]
         ikm: Option<String>,
 
@@ -259,7 +261,7 @@ enum Subcommands {
     /// Generate cryptographically-secure random bytes, seeded from the operating system's entropy source (/dev/random or equivalent).
     /// Uses the library's default 256-bit secure RNG algorithm.
     RNG {
-        /// Number of bytes to generate. If omitted, it will stream the continuously until the process is terminated.
+        /// Number of bytes to generate. If omitted, it will stream continuously until the process is terminated.
         #[arg(short, long)]
         len: Option<u32>,
 

@@ -1,11 +1,11 @@
-//! A helper class used across the libbc-rust library to hold bytes-like key material.
+//! A helper class used across the bc-rust.test library to hold bytes-like key material.
 //! The main purpose is to hold metadata about the contained key material such as the key type and
 //! entropy content to prevent accidental misuse security bugs, such as deriving cryptographic keys
 //! from uninitialized data.
 //!
 //! This object allows several types of manual-overrides, which typically require setting the [KeyMaterialInternal::allow_hazardous_operations] flag.
 //! For example, the raw bytes data can be extracted, or the key forced to a certain type,
-//! but well-designed use of the libbc-rust library should not need to ever set the [KeyMaterialInternal::allow_hazardous_operations] flag.
+//! but well-designed use of the bc-rust.test library should not need to ever set the [KeyMaterialInternal::allow_hazardous_operations] flag.
 //! The core idea of this wrapper is to keep track of the usage of the key material, including
 //! the amount of entropy that it is presumed to contain in order to prevent users from accidentally
 //! using it inappropriately in a way that could lead to security weaknesses.
@@ -16,7 +16,7 @@
 //!
 //! Some typical workflows would be:
 //!
-//! * Hash functions take in [u8] byte data and return a KeyMaterial of type RawUnknownEntropy.
+//! * Hash functions take in \[u8\] byte data and return a KeyMaterial of type RawUnknownEntropy.
 //! * Password-based key derivation functions act on KeyMaterial of any type, and in the case of RawFullEntropy, RawLowEntropy, or RawUnknownEntropy, will preserve the entropy rating.
 //! * Keyed KDFs that are given a key of RawFullEntropy or KeyedHashKey a KeyMaterial data of type RawLowEntropy or RawUnknownEntropy will promote it into RawFullEntropy.
 //! * Symmetric ciphers or asymmetric ciphers such as X25519 or ML-KEM that accept private key seeds will expect KeyMaterial of type AsymmetricPrivateKeySeed.
@@ -52,7 +52,7 @@ pub type KeyMaterial256 = KeyMaterialInternal<32>;
 pub type KeyMaterial512 = KeyMaterialInternal<64>;
 
 
-/// A helper class used across the libbc-rust library to hold bytes-like key material.
+/// A helper class used across the bc-rust.test library to hold bytes-like key material.
 /// See [KeyMaterialInternal] for for details, such as constructors.
 pub trait KeyMaterial {
     /// Loads the provided data into a new KeyMaterial of the specified type.
