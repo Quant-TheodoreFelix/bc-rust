@@ -19,6 +19,8 @@ Rust crate docs are available here: https://bcgit.github.io/bc-rust/bouncycastle
 
 Benchmark data is available here: https://bcgit.github.io/bc-rust/benches/report/index.html
 
+A basic script that reports lines-of-code and some basic code quality metrics is available here: https://bcgit.github.io/bc-rust/code_quality_stats.txt
+
 ## Roadmap
 
 This alpha release includes the following cryptographic primitives:
