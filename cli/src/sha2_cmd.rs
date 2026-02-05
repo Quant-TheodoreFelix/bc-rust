@@ -1,8 +1,8 @@
-use core_interface::traits::{Hash};
+use bouncycastle::core_interface::traits::{Hash};
 use std::io;
 use std::io::{Read, Write};
 
-use sha2::{SHA224, SHA256, SHA384, SHA512};
+use bouncycastle::sha2::{SHA224, SHA256, SHA384, SHA512};
 
 pub(crate) fn sha2_cmd(bit_len: usize, output_hex: bool) {
     match bit_len {

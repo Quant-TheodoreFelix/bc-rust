@@ -1,6 +1,6 @@
-use core_interface::traits::{RNG};
-use factory::AlgorithmFactory;
-use factory::rng_factory::RNGFactory;
+use bouncycastle::core_interface::traits::{RNG};
+use bouncycastle::factory::AlgorithmFactory;
+use bouncycastle::factory::rng_factory::RNGFactory;
 
 use std::io;
 use std::io::{Write};

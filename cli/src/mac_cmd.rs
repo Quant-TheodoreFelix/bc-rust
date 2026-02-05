@@ -2,10 +2,10 @@ use std::io::{Read, Write};
 use std::process::exit;
 use std::{fs, io};
 
-use core_interface::key_material::{KeyMaterial512, KeyType};
-use core_interface::traits::{KeyMaterial, MAC};
-use hex;
-use hmac::{HMAC_SHA256, HMAC_SHA512};
+use bouncycastle::core_interface::key_material::{KeyMaterial512, KeyType};
+use bouncycastle::core_interface::traits::{KeyMaterial, MAC};
+use bouncycastle::hex;
+use bouncycastle::hmac::{HMAC_SHA256, HMAC_SHA512};
 
 pub(crate) enum HMACVariant {
     SHA256,

@@ -1,17 +1,16 @@
 [package]
-name = "sha2"
-version = "0.1.0"
+name = "bouncycastle-sha2"
+version = "0.1.1"
 edition.workspace = true
 
 [dependencies]
-core-interface.workspace = true
-utils.workspace = true
+bouncycastle-core-interface.workspace = true
+bouncycastle-utils.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
-core-test-framework.workspace = true
-hex.workspace = true
-rng.workspace = true
+bouncycastle-core-test-framework.workspace = true
+bouncycastle-rng.workspace = true
 
 [[bench]]
 name = "sha2_benches"

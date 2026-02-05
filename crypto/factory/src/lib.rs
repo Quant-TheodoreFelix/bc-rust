@@ -25,7 +25,7 @@
 //! It also exposes [AlgorithmFactory::new] which can be used to create an instance of the algorithm
 //! by string name according to the string constants associated with the respective factory type.
 
-use core_interface::errors::{MACError};
+use bouncycastle_core_interface::errors::{MACError};
 
 pub mod hash_factory;
 pub mod kdf_factory;

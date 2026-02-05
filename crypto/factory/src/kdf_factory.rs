@@ -47,11 +47,12 @@
 //! let new_key = h.derive_key(&seed_key, additional_input).unwrap();
 //! ```
 
-
-use core_interface::errors::KDFError;
-use core_interface::traits::{KeyMaterial, SecurityStrength, KDF};
-use sha3::{SHA3_224_NAME, SHA3_256_NAME, SHA3_384_NAME, SHA3_512_NAME, SHAKE128_NAME, SHAKE256_NAME};
-use hkdf::{HKDF_SHA256_NAME, HKDF_SHA512_NAME};
+use bouncycastle_hkdf as hkdf;
+use bouncycastle_sha3 as sha3;
+use bouncycastle_core_interface::errors::KDFError;
+use bouncycastle_core_interface::traits::{KeyMaterial, SecurityStrength, KDF};
+use bouncycastle_sha3::{SHA3_224_NAME, SHA3_256_NAME, SHA3_384_NAME, SHA3_512_NAME, SHAKE128_NAME, SHAKE256_NAME};
+use bouncycastle_hkdf::{HKDF_SHA256_NAME, HKDF_SHA512_NAME};
 use crate::{AlgorithmFactory, FactoryError, DEFAULT, DEFAULT_128_BIT, DEFAULT_256_BIT};
 
 

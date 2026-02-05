@@ -50,13 +50,14 @@
 //! let hmac = MACFactory::default();
 //! ```
 
-use core_interface::errors::MACError;
+use bouncycastle_core_interface::errors::MACError;
 use crate::{FactoryError, DEFAULT, DEFAULT_128_BIT, DEFAULT_256_BIT};
-use core_interface::traits::{KeyMaterial, SecurityStrength, MAC};
-use hmac;
-use sha2;
-use hmac::{HMAC_SHA224_NAME, HMAC_SHA256_NAME, HMAC_SHA384_NAME, HMAC_SHA512_NAME};
-use hmac::{HMAC_SHA3_224_NAME, HMAC_SHA3_256_NAME, HMAC_SHA3_384_NAME, HMAC_SHA3_512_NAME};
+use bouncycastle_core_interface::traits::{KeyMaterial, SecurityStrength, MAC};
+use bouncycastle_hmac as hmac;
+use bouncycastle_sha2 as sha2;
+use bouncycastle_sha3 as sha3;
+use bouncycastle_hmac::{HMAC_SHA224_NAME, HMAC_SHA256_NAME, HMAC_SHA384_NAME, HMAC_SHA512_NAME};
+use bouncycastle_hmac::{HMAC_SHA3_224_NAME, HMAC_SHA3_256_NAME, HMAC_SHA3_384_NAME, HMAC_SHA3_512_NAME};
 
 /*** Defaults ***/
 pub const DEFAULT_MAC_NAME: &str = HMAC_SHA256_NAME;

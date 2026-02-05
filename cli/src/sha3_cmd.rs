@@ -1,9 +1,9 @@
-use core_interface::traits::{Hash, XOF};
+use bouncycastle::core_interface::traits::{Hash, XOF};
 use std::io;
 use std::io::{Read, Write};
 
 
-use sha3::{SHA3_224, SHA3_256, SHA3_384, SHA3_512, SHAKE128, SHAKE256};
+use bouncycastle::sha3::{SHA3_224, SHA3_256, SHA3_384, SHA3_512, SHAKE128, SHAKE256};
 
 pub(crate) fn sha3_cmd(bit_len: usize, output_hex: bool) {
     match bit_len {

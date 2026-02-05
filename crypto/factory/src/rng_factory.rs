@@ -40,13 +40,13 @@
 //! let output: Vec<u8> = h.hash(data);
 //! ```
 
-use core_interface::errors::RNGError;
-use core_interface::traits::{KeyMaterial, SecurityStrength, RNG};
+use bouncycastle_core_interface::errors::RNGError;
+use bouncycastle_core_interface::traits::{KeyMaterial, SecurityStrength, RNG};
 use crate::{AlgorithmFactory, FactoryError};
 use crate::{DEFAULT, DEFAULT_128_BIT, DEFAULT_256_BIT};
 
-use rng;
-use rng::{HASH_DRBG_SHA256_NAME, HASH_DRBG_SHA512_NAME};
+use bouncycastle_rng as rng;
+use bouncycastle_rng::{HASH_DRBG_SHA256_NAME, HASH_DRBG_SHA512_NAME};
 
 /*** Defaults ***/
 pub const DEFAULT_DRBG_NAME: &str = HASH_DRBG_SHA512_NAME;

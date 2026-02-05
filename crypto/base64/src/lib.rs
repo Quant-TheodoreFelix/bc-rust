@@ -78,7 +78,7 @@
 //     URLSafe,
 
 
-use utils::ct::Condition;
+use bouncycastle_utils::ct::Condition;
 
 /// One-shot encode from bytes to a base64-encoded string using a constant-time implementation.
 pub fn encode<T: AsRef<[u8]>>(input: T) -> String {

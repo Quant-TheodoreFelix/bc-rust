@@ -2,10 +2,10 @@ use std::{fs, io};
 use std::io::Write;
 use std::process::exit;
 
-use core_interface::key_material::{KeyMaterialInternal, KeyType};
-use core_interface::traits::KeyMaterial;
-use hex;
-use hkdf;
+use bouncycastle::core_interface::key_material::{KeyMaterialInternal, KeyType};
+use bouncycastle::core_interface::traits::KeyMaterial;
+use bouncycastle::hex;
+use bouncycastle::hkdf;
 
 pub(crate) fn hkdf_cmd(hkdfname: &str,
                        salt: &Option<String>,

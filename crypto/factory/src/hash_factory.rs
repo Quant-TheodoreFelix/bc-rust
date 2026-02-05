@@ -25,12 +25,12 @@
 //! let output: Vec<u8> = h.hash(data);
 //! ```
 
-use core_interface::errors::HashError;
-use core_interface::traits::{Hash, SecurityStrength};
-use sha2;
-use sha3;
-use sha2::{SHA224_NAME, SHA256_NAME, SHA384_NAME, SHA512_NAME};
-use sha3::{SHA3_224_NAME, SHA3_256_NAME, SHA3_384_NAME, SHA3_512_NAME};
+use bouncycastle_core_interface::errors::HashError;
+use bouncycastle_core_interface::traits::{Hash, SecurityStrength};
+use bouncycastle_sha2 as sha2;
+use bouncycastle_sha3 as sha3;
+use bouncycastle_sha2::{SHA224_NAME, SHA256_NAME, SHA384_NAME, SHA512_NAME};
+use bouncycastle_sha3::{SHA3_224_NAME, SHA3_256_NAME, SHA3_384_NAME, SHA3_512_NAME};
 use crate::{AlgorithmFactory, FactoryError};
 use crate::{DEFAULT, DEFAULT_128_BIT, DEFAULT_256_BIT};
 

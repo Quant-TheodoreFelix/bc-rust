@@ -1,18 +1,18 @@
 [package]
-name = "rng"
-version = "0.1.0"
+name = "bouncycastle-rng"
+version = "0.1.1"
 edition.workspace = true
 
 [dependencies]
-core-interface.workspace = true
-sha2.workspace = true
-utils.workspace = true
+bouncycastle-core-interface.workspace = true
+bouncycastle-sha2.workspace = true
+bouncycastle-utils.workspace = true
 
 # external
 getrandom = "0.4.0-rc.1"
 
 [dev-dependencies]
-core-test-framework.workspace = true
+bouncycastle-core-test-framework.workspace = true
 criterion.workspace = true
 
 [[bench]]

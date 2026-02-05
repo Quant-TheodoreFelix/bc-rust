@@ -1,10 +1,9 @@
 [package]
-name = "core-test-framework"
-version = "0.1.0"
+name = "bouncycastle-core-test-framework"
+version = "0.1.1"
 edition.workspace = true
 
 [dependencies]
-core-interface.workspace = true
-utils.workspace = true
+bouncycastle-core-interface.workspace = true
 
 [dev-dependencies]

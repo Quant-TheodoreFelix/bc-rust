@@ -1,7 +1,7 @@
-use core_interface::errors::{HashError, KDFError};
-use core_interface::key_material::{KeyMaterialInternal, KeyType};
-use core_interface::traits::{Algorithm, KeyMaterial, SecurityStrength, KDF, XOF};
-use utils::{max, min};
+use bouncycastle_core_interface::errors::{HashError, KDFError};
+use bouncycastle_core_interface::key_material::{KeyMaterialInternal, KeyType};
+use bouncycastle_core_interface::traits::{Algorithm, KeyMaterial, SecurityStrength, KDF, XOF};
+use bouncycastle_utils::{max, min};
 use crate::keccak::KeccakDigest;
 use crate::SHAKEParams;
 

@@ -148,16 +148,16 @@
 #![forbid(unsafe_code)]
 
 use std::marker::PhantomData;
-use core_interface::errors::{KDFError, MACError};
-use core_interface::key_material::{KeyMaterial0, KeyMaterial512, KeyMaterialInternal, KeyType};
-use core_interface::traits::{Hash, KDF, KeyMaterial, MAC, HashAlgParams, SecurityStrength};
-use hmac::HMAC;
-use sha2::{SHA256, SHA512};
-use utils::{max, min};
+use bouncycastle_core_interface::errors::{KDFError, MACError};
+use bouncycastle_core_interface::key_material::{KeyMaterial0, KeyMaterial512, KeyMaterialInternal, KeyType};
+use bouncycastle_core_interface::traits::{Hash, KDF, KeyMaterial, MAC, HashAlgParams, SecurityStrength};
+use bouncycastle_hmac::HMAC;
+use bouncycastle_sha2::{SHA256, SHA512};
+use bouncycastle_utils::{max, min};
 
 // Imports needed only for docs
 #[allow(unused_imports)]
-use core_interface::traits::XOF;
+use bouncycastle_core_interface::traits::XOF;
 // end doc-only imports
 
 

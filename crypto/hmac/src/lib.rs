@@ -163,12 +163,12 @@
 #![allow(incomplete_features)] // because at time of writing, generic_const_exprs is not a stable feature
 #![feature(generic_const_exprs)]
 
-use core_interface::errors::{KeyMaterialError, MACError};
-use core_interface::traits::{Algorithm, Hash, KeyMaterial, SecurityStrength, MAC};
-use core_interface::key_material::{KeyType};
-use sha2::{SHA224, SHA256, SHA384, SHA512};
-use sha3::{SHA3_224, SHA3_256, SHA3_384, SHA3_512};
-use utils::ct;
+use bouncycastle_core_interface::errors::{KeyMaterialError, MACError};
+use bouncycastle_core_interface::traits::{Algorithm, Hash, KeyMaterial, SecurityStrength, MAC};
+use bouncycastle_core_interface::key_material::{KeyType};
+use bouncycastle_sha2::{SHA224, SHA256, SHA384, SHA512};
+use bouncycastle_sha3::{SHA3_224, SHA3_256, SHA3_384, SHA3_512};
+use bouncycastle_utils::ct;
 
 
 /*** String constants ***/

@@ -102,13 +102,13 @@
 #![allow(private_bounds)]
 
 use crate::keccak::{KeccakSize};
-use core_interface::traits::{Algorithm, HashAlgParams, SecurityStrength};
+use bouncycastle_core_interface::traits::{Algorithm, HashAlgParams, SecurityStrength};
 
 // imports needed for docs
 #[allow(unused_imports)]
-use core_interface::traits::{Hash, KDF, XOF};
+use bouncycastle_core_interface::traits::{Hash, KDF, XOF};
 #[allow(unused_imports)]
-use core_interface::key_material::{KeyMaterialInternal, KeyType};
+use bouncycastle_core_interface::key_material::{KeyMaterialInternal, KeyType};
 // end of doc-only imports
 
 mod keccak;

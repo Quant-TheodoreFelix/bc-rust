@@ -1,4 +1,4 @@
-//! A helper class used across the bc-rust.test library to hold bytes-like key material.
+//! A helper class used across the bc-rust library to hold bytes-like key material.
 //! The main purpose is to hold metadata about the contained key material such as the key type and
 //! entropy content to prevent accidental misuse security bugs, such as deriving cryptographic keys
 //! from uninitialized data.
@@ -39,7 +39,7 @@
 
 use crate::errors::KeyMaterialError;
 use crate::traits::{RNG, SecurityStrength};
-use utils::{ct, max, min};
+use bouncycastle_utils::{ct, max, min};
 
 use std::cmp::{Ordering, PartialOrd};
 use std::fmt;

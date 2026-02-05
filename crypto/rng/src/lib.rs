@@ -31,13 +31,13 @@
 #![allow(incomplete_features)] // Need this because generic_const_exprs is currently experimental.
 #![feature(generic_const_exprs)]
 
-use core_interface::errors::RNGError;
-use core_interface::traits::{KeyMaterial, SecurityStrength};
+use bouncycastle_core_interface::errors::RNGError;
+use bouncycastle_core_interface::traits::{KeyMaterial, SecurityStrength};
 use crate::hash_drbg80090a::{HashDRBG80090A, HashDRBG80090AParams_SHA256, HashDRBG80090AParams_SHA512,};
 
 // needed for docs
 #[allow(unused_imports)]
-use core_interface::key_material::KeyType;
+use bouncycastle_core_interface::key_material::KeyType;
 // end doc-only imports
 
 pub mod hash_drbg80090a;

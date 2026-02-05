@@ -1,17 +1,17 @@
 [package]
-name = "factory"
-version = "0.1.0"
+name = "bouncycastle-factory"
+version = "0.1.1"
 edition.workspace = true
 
 [dependencies]
-core-interface.workspace = true
-hkdf.workspace = true
-hmac.workspace = true
-sha2.workspace = true
-sha3.workspace = true
-rng.workspace = true
+bouncycastle-core-interface.workspace = true
+bouncycastle-hkdf.workspace = true
+bouncycastle-hmac.workspace = true
+bouncycastle-sha2.workspace = true
+bouncycastle-sha3.workspace = true
+bouncycastle-rng.workspace = true
 
 [dev-dependencies]
-core-test-framework.workspace = true
-utils.workspace = true
-hex.workspace = true
+bouncycastle-core-test-framework.workspace = true
+bouncycastle-utils.workspace = true
+bouncycastle-hex.workspace = true

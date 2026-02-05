@@ -1,8 +1,8 @@
 use std::io;
 use std::io::{Read, Write};
 
-use hex;
-use base64;
+use bouncycastle::hex;
+use bouncycastle::base64;
 
 pub(crate) fn hex_encode_cmd() {
     // Stream from stdin to stdout in chunks of 1 kb

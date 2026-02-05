@@ -20,7 +20,7 @@
 
 #![forbid(unsafe_code)]
 
-use utils::ct::Condition;
+use bouncycastle_utils::ct::Condition;
 
 #[derive(Debug)]
 pub enum HexError {

@@ -1,8 +1,8 @@
 use crate::SHA2Params;
 use core::slice;
-use core_interface::errors::HashError;
-use core_interface::traits::{Hash, SecurityStrength};
-use utils::min;
+use bouncycastle_core_interface::errors::HashError;
+use bouncycastle_core_interface::traits::{Hash, SecurityStrength};
+use bouncycastle_utils::min;
 
 const SHA512_K: [u64; 80] = [
     0x428A2F98D728AE22, 0x7137449123EF65CD, 0xB5C0FBCFEC4D3B2F, 0xE9B5DBA58189DBBC,

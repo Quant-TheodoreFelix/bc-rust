@@ -7,21 +7,22 @@ edition = "2024"
 [workspace.dependencies]
 
 # *** Internal Dependencies ***
-base64 = { path = "./crypto/base64", version = "0.1.0"}
-core-interface = { path = "./crypto/core-interface", version = "0.1.0" }
-core-test-framework = { path = "./crypto/core-test-framework", version = "0.1.0"}
-factory = { path = "./crypto/factory", version = "0.1.0"}
-hex = { path = "./crypto/hex", version = "0.1.0" }
-hkdf = { path = "./crypto/hkdf", version = "0.1.0"}
-hmac = { path = "./crypto/hmac", version = "0.1.0"}
-rng = { path = "./crypto/rng", version = "0.1.0" }
-sha2 = { path = "./crypto/sha2", version = "0.1.0"}
-sha3 = { path = "./crypto/sha3", version = "0.1.0"}
-utils = { path = "./crypto/utils", version = "0.1.0"}
+bouncycastle = { path = "./", version = "0.1.1" }
+bouncycastle-base64 = { path = "./crypto/base64", version = "0.1.1"}
+bouncycastle-core-interface = { path = "./crypto/core-interface", version = "0.1.1" }
+bouncycastle-core-test-framework = { path = "./crypto/core-test-framework", version = "0.1.1"}
+bouncycastle-factory = { path = "./crypto/factory", version = "0.1.1"}
+bouncycastle-hex = { path = "./crypto/hex", version = "0.1.1" }
+bouncycastle-hkdf = { path = "./crypto/hkdf", version = "0.1.1"}
+bouncycastle-hmac = { path = "./crypto/hmac", version = "0.1.1"}
+bouncycastle-rng = { path = "./crypto/rng", version = "0.1.1" }
+bouncycastle-sha2 = { path = "./crypto/sha2", version = "0.1.1"}
+bouncycastle-sha3 = { path = "./crypto/sha3", version = "0.1.1"}
+bouncycastle-utils = { path = "./crypto/utils", version = "0.1.1"}
 
 
 # *** External Dependencies ***
-criterion = "0.8.1" # only for benchmarking, not used in lib or cli build
+criterion = "0.8.2" # only for benchmarking, not used in lib or cli build
 
 [profile.release]
 lto = "thin"
@@ -31,16 +32,16 @@ lto = "thin"
 # libbouncycastle
 [package]
 name = "bouncycastle"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 
 [dependencies]
-base64.workspace = true
-core-interface.workspace = true
-factory.workspace = true
-hex.workspace = true
-hkdf.workspace = true
-hmac.workspace = true
-rng.workspace = true
-sha2.workspace = true
-sha3.workspace = true
+bouncycastle-base64.workspace = true
+bouncycastle-core-interface.workspace = true
+bouncycastle-factory.workspace = true
+bouncycastle-hex.workspace = true
+bouncycastle-hkdf.workspace = true
+bouncycastle-hmac.workspace = true
+bouncycastle-rng.workspace = true
+bouncycastle-sha2.workspace = true
+bouncycastle-sha3.workspace = true

@@ -33,9 +33,10 @@
 //! let mut h = XOFFactory::default();
 //! ```
 
-use core_interface::errors::HashError;
-use core_interface::traits::{SecurityStrength, KDF, XOF};
-use sha3::{SHAKE128_NAME, SHAKE256_NAME};
+use bouncycastle_sha3 as sha3;
+use bouncycastle_core_interface::errors::HashError;
+use bouncycastle_core_interface::traits::{SecurityStrength, KDF, XOF};
+use bouncycastle_sha3::{SHAKE128_NAME, SHAKE256_NAME};
 use crate::{AlgorithmFactory, FactoryError};
 
 

@@ -40,7 +40,7 @@ mod sha512;
 
 pub use self::sha256::SHA256Internal;
 pub use self::sha512::Sha512Internal;
-use core_interface::traits::{Algorithm, HashAlgParams, SecurityStrength};
+use bouncycastle_core_interface::traits::{Algorithm, HashAlgParams, SecurityStrength};
 
 /*** String constants ***/
 pub const SHA224_NAME: &str = "SHA224";

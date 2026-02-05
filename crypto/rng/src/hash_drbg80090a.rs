@@ -5,11 +5,11 @@
 
 use crate::Sp80090ADrbg;
 
-use core_interface::errors::{KeyMaterialError, RNGError};
-use core_interface::key_material::{KeyMaterial512, KeyType};
-use core_interface::traits::{Hash, HashAlgParams, KeyMaterial, RNG, SecurityStrength};
-use sha2::{SHA256, SHA512};
-use utils::min;
+use bouncycastle_core_interface::errors::{KeyMaterialError, RNGError};
+use bouncycastle_core_interface::key_material::{KeyMaterial512, KeyType};
+use bouncycastle_core_interface::traits::{Hash, HashAlgParams, KeyMaterial, RNG, SecurityStrength};
+use bouncycastle_sha2::{SHA256, SHA512};
+use bouncycastle_utils::min;
 
 use std::fmt::{Display, Formatter};
 
