@@ -9,7 +9,7 @@ The Bouncy Castle Crypto package is a Rust implementation of cryptographic algor
 
 The aim of this package is to bring the Bouncy Castle team's experience building easy-to-use and FIPS-validated cryptography to Rust. The build system is designed so that you can build the entire library, a single algorithm, or anything in between. It also comes with a command-line interface for all the supported algorithms.
 
-If you are interested in purchasing a support contract or accelerating the development of this package, please contact us at 
+If you are interested in purchasing a support contract or accelerating the development of this package, please contact us at [office@bouncycastle.org](mailto:office@bouncycastle.org) or [mike@bouncycastle.org](mailto:mike@bouncycastle.org).
 
 ## Docs and Benches
 
