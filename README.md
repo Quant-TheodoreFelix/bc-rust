@@ -1,4 +1,4 @@
-# The Bouncy Castle Crypto Package For Java
+# The Bouncy Castle Crypto Package For Rust
 
 > [!WARNING]
 > This package is currently in ALPHA, meaning that it is not complete or production-ready and will be evolving rapidly over the coming months.
@@ -9,7 +9,50 @@ The Bouncy Castle Crypto package is a Rust implementation of cryptographic algor
 
 The aim of this package is to bring the Bouncy Castle team's experience building easy-to-use and FIPS-validated cryptography to Rust. The build system is designed so that you can build the entire library, a single algorithm, or anything in between. It also comes with a command-line interface for all the supported algorithms.
 
-If you are interested in purchasing a support contract or accelerating the development of this package, please contact us at [office@bouncycastle.org](mailto:office@bouncycastle.org) or [mike@bouncycastle.org](mailto:mike@bouncycastle.org).
+If you are interested in purchasing a support contract or accelerating the development of this package, please contact us at 
+
+
+## Roadmap
+
+This alpha release includes the following cryptographic primitives:
+
+* Hex (constant-time)
+* Base64 (constant-time)
+* SHA-2
+* SHA-3
+* HMAC
+* HKDF
+* The NIST HashDRBG random number generator
+
+But more than anything, the alpha release focuses on the design of the public trait and error type system contained in the `core-interface` sub-crate.
+
+Next up will be to round out the set of cryptographic primitives:
+
+* Block ciphers (AES)
+* Signatures (Ed25519, Ed448, ML-DSA, SLH-DSA)
+* Key Establishment (X25519, X448, ML-KEM)
+
+(yes, you have noticed that RSA, ECDSA and ECDH are not on the list. I suppose we could, but we'd really rather not.)
+
+After that, we'll tackle in some kind of order (depending on public interest and funding):
+
+* PKIX (DER, X.509, CMS, CMP)
+* TLS 1.3
+* C foreign function interface to link to openssl as a provider (rustle)
+* JWT & CWT
+* FIPS certification framework and test harnesses
+* Refining the library's build system (no_std, feature granularity, build and release packaging, etc)
+
+## Community feedback is most welcome!
+
+As this is an alpha release, we're eagerly looking for feedback from the community. We would especially like feedback on the following areas:
+
+* Public API ergonomics and granularity of exposed functionality.
+* Certification / compliance concerns.
+* Prioritization of roadmap items above.
+
+You can reach us at [office@bouncycastle.org](mailto:office@bouncycastle.org) or [mike@bouncycastle.org](mailto:mike@bouncycastle.org).
+
 
 ## Building
 
