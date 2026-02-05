@@ -1,0 +1,74 @@
+name: Build and Publish Docs
+
+on:
+  pull_request:
+  push:
+    branches: [ 'main' ]
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - run: cargo doc
+      - name: copy to output
+        run: cp -r ./target/doc ./gh-pages
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bc-rust-docs
+          path: ./target/doc
+  run_benches:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - run: cargo bench --all
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bc-rust-benches
+          path: ./target/criterion
+  collect_ghpages:
+    if: github.ref == 'refs/heads/main'
+    needs: [build_docs, run_benches]
+    runs-on: ubuntu-latest
+    steps:
+      - run: mkdir ./ghpages
+      - name: Get docs from previous job
+        uses: actions/download-artifact@v4
+        with:
+          name: bc-rust-docs
+          path: gh-pages/
+      - name: Get benches from previous job
+        uses: actions/download-artifact@v4
+        with:
+          name: bc-rust-benches
+          path: gh-pages/
+      - name: Archive Compatibility Matrix For Download
+        uses:  actions/upload-pages-artifact@v3
+        with:
+          path: ./ghpages
+  publish_to_gh_pages:
+    if: github.ref == 'refs/heads/main'
+    needs: collect_ghpages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update git pages with new compatibiliy matrix
+        id: deployment
+        uses: actions/deploy-pages@v4
