@@ -11,6 +11,13 @@ The aim of this package is to bring the Bouncy Castle team's experience building
 
 If you are interested in purchasing a support contract or accelerating the development of this package, please contact us at 
 
+## Docs and Benches
+
+During ALPHA, we're just publishing docs and benchmark results unofficially on github.
+
+Rust crate docs are available here: https://bcgit.github.io/bc-rust/bouncycastle/
+
+Benchmark data is available here: https://bcgit.github.io/bc-rust/criterion/report/index.html
 
 ## Roadmap
 
