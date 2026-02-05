@@ -42,21 +42,21 @@ jobs:
     needs: [build_docs, run_benches]
     runs-on: ubuntu-latest
     steps:
-      - run: mkdir ./ghpages
+      - run: mkdir ./gh-pages
       - name: Get docs from previous job
         uses: actions/download-artifact@v4
         with:
           name: bc-rust-docs
-          path: gh-pages/
+          path: ./gh-pages/
       - name: Get benches from previous job
         uses: actions/download-artifact@v4
         with:
           name: bc-rust-benches
-          path: gh-pages/
+          path: ./gh-pages/benches
       - name: Archive Compatibility Matrix For Download
         uses:  actions/upload-pages-artifact@v3
         with:
-          path: ./ghpages
+          path: ./gh-pages
   publish_to_gh_pages:
     if: github.ref == 'refs/heads/main'
     needs: collect_ghpages

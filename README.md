@@ -17,7 +17,7 @@ During ALPHA, we're just publishing docs and benchmark results unofficially on g
 
 Rust crate docs are available here: https://bcgit.github.io/bc-rust/bouncycastle/
 
-Benchmark data is available here: https://bcgit.github.io/bc-rust/criterion/report/index.html
+Benchmark data is available here: https://bcgit.github.io/bc-rust/benches/report/index.html
 
 ## Roadmap
 
