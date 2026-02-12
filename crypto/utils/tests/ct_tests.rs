@@ -186,6 +186,74 @@ mod i64_tests {
     }
 }
 
+//
+// Q. T. Felix - start
+//
+#[cfg(test)]
+mod u64_tests {
+    use super::*;
+
+    #[test]
+    fn const_tests() {
+        // Q. T. Felix NOTE: Ensure TRUE/FALSE are correctly interpreted as boolean.
+        assert_eq!(Condition::<u64>::TRUE.is_true(), true);
+        assert_eq!(Condition::<u64>::FALSE.is_true(), false);
+    }
+
+    #[test]
+    fn from_bool() {
+        // Compile-time const generics check
+        assert_eq!(Condition::<u64>::from_bool::<true>().is_true(), true);
+        assert_eq!(Condition::<u64>::from_bool::<false>().is_true(), false);
+    }
+
+    #[test]
+    fn select() {
+        let t = Condition::<u64>::TRUE;
+        let f = Condition::<u64>::FALSE;
+
+        let val1: u64 = 0xDEADBEEFCAFEBABE;
+        let val2: u64 = 0x0000000000000000;
+
+        // Q. T. Felix NOTE: This test is CRITICAL.
+        //                   If TRUE was defined as '1' (like i64), this would fail because 'select' relies on bitwise mask.
+        //                   It requires TRUE to be u64::MAX (all 1s) to preserve the full bits of val1.
+        assert_eq!(t.select(val1, val2), val1);
+        assert_eq!(f.select(val1, val2), val2);
+
+        // Cross check with from_bool
+        let t_gen = Condition::<u64>::from_bool::<true>();
+        assert_eq!(t_gen.select(val1, val2), val1);
+    }
+
+    #[test]
+    fn bit_ops() {
+        let t = Condition::<u64>::TRUE;
+        let f = Condition::<u64>::FALSE;
+
+        // NOT
+        assert_eq!((!t).is_true(), false);
+        assert_eq!((!f).is_true(), true);
+
+        // AND
+        assert_eq!((t & t).is_true(), true);
+        assert_eq!((t & f).is_true(), false);
+        assert_eq!((f & f).is_true(), false);
+
+        // OR
+        assert_eq!((t | t).is_true(), true);
+        assert_eq!((t | f).is_true(), true);
+        assert_eq!((f | f).is_true(), false);
+
+        // XOR
+        assert_eq!((t ^ t).is_true(), false);
+        assert_eq!((t ^ f).is_true(), true);
+    }
+} // AlLpAsS
+//
+// Q. T. Felix - end
+//
+
 // #[cfg(test)]
 // mod u64_tests {
 //     use super::*;
