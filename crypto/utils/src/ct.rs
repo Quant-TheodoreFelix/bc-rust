@@ -38,7 +38,14 @@ impl Condition<i64> {
     // MikeO: TODO: there are a bunch of impls in here that seem to be generic and not related to i64,
     // MikeO: TODO: could those be moved to a generic impl<T> for Condition<T> ?
 
-    pub const TRUE: Self = Self(1);
+    //
+    // Q. T. Felix - start
+    //
+    // Q. T. Felix NOTE: For this conditional negation formula to work, the mask value for TRUE must be -1 (Hex: 0xFFFF...), where all bits are set to 1
+    pub const TRUE: Self = Self(-1);
+    //
+    // Q. T. Felix - end
+    //
     pub const FALSE: Self = Self(0);
 
     pub const fn from_bool<const VALUE: bool>() -> Self {
@@ -112,12 +119,54 @@ impl Condition<i64> {
     }
 
     // MikeO: TODO: I have no idea what this does, .negate(-1) seems to give -3 ?? Is that a bug?
+    /// ## negate seems to give -3
+    ///
+    /// `value` is `-1` (i.e., all bits are `1`, `...1111`)
+    ///
+    /// Condition `self.0` is 1 (`...0001`) (assuming `TRUE`)
+    ///
+    /// XOR operation was executed as `value ^ self.0`
+    ///
+    /// Then `...1111 XOR ...0001 = ...1110` (i.e., `-2`)
+    ///
+    /// Subtraction operation is `wrapping_sub(self.0)`
+    ///
+    /// Then `-2 - 1 = -3`
+    ///
+    /// As a result, `1`, which is the negation of `-1`, should be returned, but `-3` is output.
+    ///
+    /// Therefore, if the [Self::TRUE] constant value of the i64 [Condition] implementation is changed to `-1`,
+    /// the test also runs normally.
+    ///
+    /// ---
+    ///
+    /// kor
+    ///
+    /// 입력값 `value`가 `-1` (즉 모든 비트가 `1`, `...1111`)
+    ///
+    /// 조건 `self.0`은 1 (`...0001`) (`TRUE`라고 가정하고)
+    ///
+    /// XOR 연산은 `value ^ self.0`로 실행하셧음
+    ///
+    /// 그러면 `...1111 XOR ...0001 = ...1110` (즉 `-2`)
+    ///
+    /// 뺄셈 연산은 `wrapping_sub(self.0)`
+    ///
+    /// 그럼? `-2 - 1 = -3`
+    ///
+    /// 결과적으로 `-1`의 부정인` 1`이 나와야 하는데 `-3`이 출력됩니다
+    ///
+    /// 그래서 i64 [Condition] 구현체의 [Self::TRUE] 상수 값을 `-1`로 변경하면
+    /// 테스트도 정상적으로 수행됩니다.
+    ///
+    /// ---
+    ///
     /// Conditionally negate the value.
     pub const fn negate(self, value: i64) -> i64 {
         (value ^ self.0).wrapping_sub(self.0)
     }
 
-    const fn or_halves(value: i64) -> i64 {
+    pub const fn or_halves(value: i64) -> i64 {
         (value | (value >> 32)) & 0xFFFFFFFF
     }
 

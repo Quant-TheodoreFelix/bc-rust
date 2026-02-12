@@ -154,10 +154,42 @@ mod i64_tests {
     }
 
     // MikeO: TODO: I don't understand what this function does well enough to test it.
+    //
+    // Q. T. Felix - start
+    //
     #[test]
     fn test_or_halves() {
-        todo!()
+        // 0 input -> 0 output
+        assert_eq!(Condition::<i64>::or_halves(0), 0);
+
+        // Lower 32 bits should be preserved
+        assert_eq!(Condition::<i64>::or_halves(1), 1);
+        assert_eq!(Condition::<i64>::or_halves(0x12345678), 0x12345678);
+
+        // Upper 32 bits should be folded into lower 32 bits
+        // (1 << 32) OR (1 << 32 >> 32) => 0 OR 1 => 1
+        assert_eq!(Condition::<i64>::or_halves(1 << 32), 1);
+
+        // Mixed case: Upper 0x10000000 | Lower 0x00000001 => 0x10000001
+        assert_eq!(Condition::<i64>::or_halves(0x10000000_00000001), 0x10000001);
+
+        // Negative number check (-1)
+        // -1 is 0xFFFF...FFFF
+        // (-1 >> 32) is -1 (Arithmetic shift preserves sign)
+        // (-1 | -1) is -1
+        // -1 & 0xFFFFFFFF is 0x00000000FFFFFFFF (i64 value: 4294967295)
+        assert_eq!(Condition::<i64>::or_halves(-1), 0xFFFFFFFF);
+
+        // i64::MIN check (Only MSB set)
+        // i64::MIN = 0x80000000_00000000
+        // (val >> 32) = 0xFFFFFFFF_80000000 (Sign extension)
+        // (val | shifted) = 0xFFFFFFFF_80000000
+        // (& mask) = 0x00000000_80000000
+        assert_eq!(Condition::<i64>::or_halves(i64::MIN), 0x80000000);
     }
+    //
+    // Q. T. Felix - end
+    //
 
     #[test]
     fn test_select() {
